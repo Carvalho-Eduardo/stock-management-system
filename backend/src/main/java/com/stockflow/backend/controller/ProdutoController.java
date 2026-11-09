@@ -4,6 +4,8 @@ package com.stockflow.backend.controller;
 import com.stockflow.backend.model.Produto;
 import com.stockflow.backend.service.ProdutoService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,32 +25,50 @@ public class ProdutoController {
     // Lista todos os produtos.
     @GetMapping
     public ResponseEntity<List<Produto>> listarProdutos() {
-        return ResponseEntity.ok(produtoService.listarProdutos());
+
+        return ResponseEntity.ok(
+                produtoService.listarProdutos()
+        );
+    }
+
+    // Busca produtos pelo nome ou SKU.
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Produto>> buscarProdutos(
+            @RequestParam String termo) {
+
+        return ResponseEntity.ok(
+                produtoService.buscarProdutos(termo)
+        );
     }
 
     // Busca um produto pelo ID.
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> buscarProduto(@PathVariable Long id) {
+    public ResponseEntity<Produto> buscarProduto(
+            @PathVariable Long id) {
+
         return ResponseEntity.ok(
                 produtoService.buscarProdutoPorId(id)
         );
     }
 
-    // Cadastra um novo produto.
+    // Cadastra um produto.
     @PostMapping
     public ResponseEntity<Produto> cadastrarProduto(
-            @RequestBody Produto produto) {
+            @Valid @RequestBody Produto produto) {
 
-        Produto produtoSalvo = produtoService.cadastrarProduto(produto);
+        Produto produtoSalvo =
+                produtoService.cadastrarProduto(produto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(produtoSalvo);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(produtoSalvo);
     }
 
-    // Atualiza um produto existente.
+    // Atualiza um produto.
     @PutMapping("/{id}")
     public ResponseEntity<Produto> atualizarProduto(
             @PathVariable Long id,
-            @RequestBody Produto produto) {
+            @Valid @RequestBody Produto produto) {
 
         Produto produtoAtualizado =
                 produtoService.atualizarProduto(id, produto);
@@ -57,8 +77,10 @@ public class ProdutoController {
     }
 
     // Exclui um produto.
-    @DeleteMapping("/{id}") 
-    public ResponseEntity<Void> excluirProduto(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluirProduto(
+            @PathVariable Long id) {
+
         produtoService.excluirProduto(id);
 
         return ResponseEntity.noContent().build();
