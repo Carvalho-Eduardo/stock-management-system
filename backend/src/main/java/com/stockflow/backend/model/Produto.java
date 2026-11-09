@@ -44,6 +44,12 @@ public class Produto {
     @Column(nullable = false)
     private Integer estoqueMinimo;
 
+    // Muitos produtos podem pertencer a uma mesma categoria.
+    @NotNull(message = "A categoria do produto é obrigatória.")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
+
     public Produto() {
     }
 
@@ -101,5 +107,13 @@ public class Produto {
 
     public void setEstoqueMinimo(Integer estoqueMinimo) {
         this.estoqueMinimo = estoqueMinimo;
+    }
+
+    public Categoria getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
     }
 }

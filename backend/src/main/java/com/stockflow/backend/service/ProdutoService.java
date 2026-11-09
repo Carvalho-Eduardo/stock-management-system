@@ -1,7 +1,10 @@
 
 package com.stockflow.backend.service;
 
+import com.stockflow.backend.model.Categoria;
 import com.stockflow.backend.model.Produto;
+
+import com.stockflow.backend.repository.CategoriaRepository;
 import com.stockflow.backend.repository.ProdutoRepository;
 
 import org.springframework.http.HttpStatus;
@@ -14,9 +17,14 @@ import java.util.List;
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
+    private final CategoriaRepository categoriaRepository;
 
-    public ProdutoService(ProdutoRepository produtoRepository) {
+    public ProdutoService(
+            ProdutoRepository produtoRepository,
+            CategoriaRepository categoriaRepository) {
+
         this.produtoRepository = produtoRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     // Lista todos os produtos cadastrados.
@@ -53,6 +61,25 @@ public class ProdutoService {
                 );
     }
 
+    // Verifica se a categoria informada existe.
+    private Categoria buscarCategoria(Long categoriaId) {
+
+        if (categoriaId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A categoria do produto é obrigatória."
+            );
+        }
+
+        return categoriaRepository.findById(categoriaId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Categoria não encontrada com ID: " + categoriaId
+                        )
+                );
+    }
+
     // Cadastra um novo produto.
     public Produto cadastrarProduto(Produto produto) {
 
@@ -62,6 +89,13 @@ public class ProdutoService {
                     "Já existe um produto cadastrado com este SKU."
             );
         }
+
+        // Associa o produto a uma categoria existente.
+        Categoria categoria = buscarCategoria(
+                produto.getCategoria().getId()
+        );
+
+        produto.setCategoria(categoria);
 
         return produtoRepository.save(produto);
     }
@@ -83,16 +117,25 @@ public class ProdutoService {
             );
         }
 
+        // Verifica e recupera a categoria informada.
+        Categoria categoria = buscarCategoria(
+                dadosAtualizados.getCategoria().getId()
+        );
+
         produtoExistente.setNome(dadosAtualizados.getNome());
         produtoExistente.setDescricao(dadosAtualizados.getDescricao());
         produtoExistente.setSku(dadosAtualizados.getSku());
         produtoExistente.setPreco(dadosAtualizados.getPreco());
+
         produtoExistente.setQuantidadeEstoque(
                 dadosAtualizados.getQuantidadeEstoque()
         );
+
         produtoExistente.setEstoqueMinimo(
                 dadosAtualizados.getEstoqueMinimo()
         );
+
+        produtoExistente.setCategoria(categoria);
 
         return produtoRepository.save(produtoExistente);
     }
