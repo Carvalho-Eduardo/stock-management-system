@@ -23,43 +23,43 @@ public class MovimentacaoEstoque {
     @JoinColumn(name = "produto_id", nullable = false)
     private Produto produto;
 
+    // Usuário responsável pela movimentação.
+    // Opcional para preservar os registros históricos antigos.
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     // Tipo da movimentação: ENTRADA ou SAIDA.
     @NotNull(message = "O tipo da movimentação é obrigatório.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TipoMovimentacao tipo;
 
-    // Quantidade movimentada.
     @NotNull(message = "A quantidade é obrigatória.")
     @Positive(message = "A quantidade deve ser maior que zero.")
     @Column(nullable = false)
     private Integer quantidade;
 
-    // Estoque existente antes da movimentação.
     @NotNull
     @PositiveOrZero
     @Column(nullable = false)
     private Integer estoqueAnterior;
 
-    // Estoque resultante da movimentação.
     @NotNull
     @PositiveOrZero
     @Column(nullable = false)
     private Integer estoquePosterior;
 
-    // Observação opcional.
     @Size(max = 500, message = "A observação deve ter no máximo 500 caracteres.")
     @Column(length = 500)
     private String observacao;
 
-    // Data e horário do registro.
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataHora;
 
     public MovimentacaoEstoque() {
     }
 
-    // Define automaticamente a data e o horário antes de salvar.
     @PrePersist
     protected void registrarDataHora() {
         if (this.dataHora == null) {
@@ -81,6 +81,14 @@ public class MovimentacaoEstoque {
 
     public void setProduto(Produto produto) {
         this.produto = produto;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 
     public TipoMovimentacao getTipo() {

@@ -4,7 +4,9 @@ package com.stockflow.backend.service;
 import com.stockflow.backend.dto.FornecedorRequest;
 import com.stockflow.backend.dto.FornecedorResponse;
 import com.stockflow.backend.model.Fornecedor;
+import com.stockflow.backend.repository.CompraRepository;
 import com.stockflow.backend.repository.FornecedorRepository;
+import com.stockflow.backend.repository.ProdutoFornecedorRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,14 +15,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
-
 @Service
 public class FornecedorService {
 
     private final FornecedorRepository fornecedorRepository;
+    private final CompraRepository compraRepository;
+    private final ProdutoFornecedorRepository produtoFornecedorRepository;
 
-    public FornecedorService(FornecedorRepository fornecedorRepository) {
+    public FornecedorService(
+            FornecedorRepository fornecedorRepository,
+            CompraRepository compraRepository,
+            ProdutoFornecedorRepository produtoFornecedorRepository
+    ) {
         this.fornecedorRepository = fornecedorRepository;
+        this.compraRepository = compraRepository;
+        this.produtoFornecedorRepository = produtoFornecedorRepository;
     }
 
     @Transactional
@@ -109,6 +118,20 @@ public class FornecedorService {
     public void excluir(Long id) {
 
         Fornecedor fornecedor = encontrarFornecedor(id);
+
+        if (compraRepository.existsByFornecedorId(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Não é possível excluir este fornecedor porque existem compras vinculadas a ele."
+            );
+        }
+
+        if (produtoFornecedorRepository.existsByFornecedorId(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Não é possível excluir este fornecedor porque existem produtos vinculados a ele."
+            );
+        }
 
         fornecedorRepository.delete(fornecedor);
     }

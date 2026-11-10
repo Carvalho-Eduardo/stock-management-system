@@ -4,11 +4,16 @@ package com.stockflow.backend.service;
 import com.stockflow.backend.model.MovimentacaoEstoque;
 import com.stockflow.backend.model.Produto;
 import com.stockflow.backend.model.TipoMovimentacao;
+import com.stockflow.backend.model.Usuario;
 
 import com.stockflow.backend.repository.MovimentacaoEstoqueRepository;
 import com.stockflow.backend.repository.ProdutoRepository;
+import com.stockflow.backend.repository.UsuarioRepository;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,13 +25,16 @@ public class MovimentacaoEstoqueService {
 
     private final MovimentacaoEstoqueRepository movimentacaoRepository;
     private final ProdutoRepository produtoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public MovimentacaoEstoqueService(
             MovimentacaoEstoqueRepository movimentacaoRepository,
-            ProdutoRepository produtoRepository) {
+            ProdutoRepository produtoRepository,
+            UsuarioRepository usuarioRepository) {
 
         this.movimentacaoRepository = movimentacaoRepository;
         this.produtoRepository = produtoRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     // Registra uma entrada de produtos no estoque.
@@ -87,6 +95,9 @@ public class MovimentacaoEstoqueService {
             );
         }
 
+        // Identifica o usuário autenticado.
+        Usuario usuario = obterUsuarioAutenticado();
+
         // Busca o produto com bloqueio durante a transação.
         Produto produto = produtoRepository.buscarPorIdComBloqueio(produtoId)
                 .orElseThrow(() ->
@@ -114,6 +125,7 @@ public class MovimentacaoEstoqueService {
                         estoqueAnterior,
                         quantidade
                 );
+
             } catch (ArithmeticException erro) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
@@ -142,6 +154,7 @@ public class MovimentacaoEstoqueService {
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
 
         movimentacao.setProduto(produto);
+        movimentacao.setUsuario(usuario);
         movimentacao.setTipo(tipo);
         movimentacao.setQuantidade(quantidade);
         movimentacao.setEstoqueAnterior(estoqueAnterior);
@@ -156,6 +169,40 @@ public class MovimentacaoEstoqueService {
         // A atualização do produto e o histórico são salvos
         // dentro da mesma transação.
         return movimentacaoRepository.save(movimentacao);
+    }
+
+    // Recupera o usuário associado ao token da sessão.
+    private Usuario obterUsuarioAutenticado() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Usuário não autenticado."
+            );
+        }
+
+        String email = authentication.getName();
+
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Não foi possível identificar o usuário autenticado."
+            );
+        }
+
+        return usuarioRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.UNAUTHORIZED,
+                                "Usuário autenticado não encontrado."
+                        )
+                );
     }
 
     // Lista todo o histórico de movimentações.

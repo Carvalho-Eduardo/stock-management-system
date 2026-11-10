@@ -22,7 +22,7 @@ public class Usuario {
     private String senha;
 
     @Column(nullable = false, length = 30)
-    private String perfil = "ADMINISTRADOR";
+    private String perfil = "OPERADOR";
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCadastro;
@@ -30,6 +30,10 @@ public class Usuario {
     @PrePersist
     protected void aoCriar() {
         dataCadastro = LocalDateTime.now();
+
+        if (perfil == null || perfil.isBlank()) {
+            perfil = "OPERADOR";
+        }
     }
 
     public Usuario() {
