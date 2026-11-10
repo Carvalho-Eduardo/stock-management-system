@@ -47,9 +47,11 @@ public class GlobalExceptionHandler {
         return criarResposta(
                 status,
                 status.getReasonPhrase(),
-                List.of(exception.getReason() != null
-                        ? exception.getReason()
-                        : "Ocorreu um erro na requisição.")
+                List.of(
+                        exception.getReason() != null
+                                ? exception.getReason()
+                                : "Ocorreu um erro na requisição."
+                )
         );
     }
 
@@ -61,7 +63,23 @@ public class GlobalExceptionHandler {
         return criarResposta(
                 HttpStatus.CONFLICT,
                 "Conflito de dados",
-                List.of("Não foi possível salvar os dados. Verifique se já existe um registro com as mesmas informações.")
+                List.of(
+                        "Não foi possível salvar os dados. Verifique se já existe um registro com as mesmas informações."
+                )
+        );
+    }
+
+    // Trata erros inesperados não previstos pelos outros métodos.
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> tratarErroInterno(
+            Exception exception) {
+
+        return criarResposta(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Erro interno do servidor",
+                List.of(
+                        "Ocorreu um erro inesperado. Tente novamente mais tarde."
+                )
         );
     }
 

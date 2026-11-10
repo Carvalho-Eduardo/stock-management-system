@@ -4,23 +4,31 @@ package com.stockflow.backend.repository;
 import com.stockflow.backend.model.Produto;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
-    // Verifica se já existe um produto com determinado SKU.
     boolean existsBySku(String sku);
 
-    // Verifica se outro produto utiliza o mesmo SKU.
     boolean existsBySkuAndIdNot(String sku, Long id);
 
-    // Busca produtos pelo nome ou SKU.
     List<Produto> findByNomeContainingIgnoreCaseOrSkuContainingIgnoreCase(
             String nome,
             String sku
     );
 
-    // Verifica se uma categoria possui produtos associados.
     boolean existsByCategoriaId(Long categoriaId);
+
+    // Bloqueia o produto durante a operação de estoque.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Produto p WHERE p.id = :id")
+    Optional<Produto> buscarPorIdComBloqueio(@Param("id") Long id);
+
 }
