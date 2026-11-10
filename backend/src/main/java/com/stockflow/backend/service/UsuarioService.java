@@ -3,14 +3,22 @@ package com.stockflow.backend.service;
 
 import com.stockflow.backend.dto.CadastroUsuarioRequest;
 import com.stockflow.backend.dto.LoginRequest;
+import com.stockflow.backend.dto.LoginResponse;
 import com.stockflow.backend.dto.UsuarioResponse;
+
 import com.stockflow.backend.model.Usuario;
+
 import com.stockflow.backend.repository.UsuarioRepository;
 
+import com.stockflow.backend.security.JwtService;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Locale;
@@ -19,19 +27,28 @@ import java.util.Locale;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
+    ) {
         this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Transactional
     public UsuarioResponse cadastrar(CadastroUsuarioRequest request) {
 
-        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
 
         if (usuarioRepository.existsByEmailIgnoreCase(email)) {
+
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Este e-mail já está cadastrado."
@@ -43,10 +60,13 @@ public class UsuarioService {
         usuario.setNome(request.getNome().trim());
         usuario.setEmail(email);
 
-        // A senha é criptografada antes de ser salva no banco.
-        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        // Criptografa a senha antes de salvar.
+        usuario.setSenha(
+                passwordEncoder.encode(request.getSenha())
+        );
 
-        usuario.setPerfil("ADMINISTRADOR");
+        // Cadastro público nunca concede perfil administrativo.
+        usuario.setPerfil("OPERADOR");
 
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
@@ -54,29 +74,40 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public UsuarioResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
 
-        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
 
-        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
+        Usuario usuario = usuarioRepository
+                .findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "E-mail ou senha incorretos."
                 ));
 
-        // Compara a senha recebida com a senha criptografada do banco.
         boolean senhaCorreta = passwordEncoder.matches(
                 request.getSenha(),
                 usuario.getSenha()
         );
 
         if (!senhaCorreta) {
+
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "E-mail ou senha incorretos."
             );
         }
 
-        return new UsuarioResponse(usuario);
+        // Gera o token JWT.
+        String token = jwtService.gerarToken(usuario);
+
+        // Retorna token e dados do usuário.
+        return new LoginResponse(
+                token,
+                jwtService.getExpiracaoSegundos(),
+                new UsuarioResponse(usuario)
+        );
     }
 }
