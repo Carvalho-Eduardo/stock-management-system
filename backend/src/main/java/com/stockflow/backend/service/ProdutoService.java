@@ -5,11 +5,14 @@ import com.stockflow.backend.model.Categoria;
 import com.stockflow.backend.model.Produto;
 
 import com.stockflow.backend.repository.CategoriaRepository;
+import com.stockflow.backend.repository.ItemCompraRepository;
 import com.stockflow.backend.repository.MovimentacaoEstoqueRepository;
+import com.stockflow.backend.repository.ProdutoFornecedorRepository;
 import com.stockflow.backend.repository.ProdutoRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -20,23 +23,29 @@ public class ProdutoService {
     private final ProdutoRepository produtoRepository;
     private final CategoriaRepository categoriaRepository;
     private final MovimentacaoEstoqueRepository movimentacaoRepository;
+    private final ItemCompraRepository itemCompraRepository;
+    private final ProdutoFornecedorRepository produtoFornecedorRepository;
 
     public ProdutoService(
             ProdutoRepository produtoRepository,
             CategoriaRepository categoriaRepository,
-            MovimentacaoEstoqueRepository movimentacaoRepository) {
-
+            MovimentacaoEstoqueRepository movimentacaoRepository,
+            ItemCompraRepository itemCompraRepository,
+            ProdutoFornecedorRepository produtoFornecedorRepository
+    ) {
         this.produtoRepository = produtoRepository;
         this.categoriaRepository = categoriaRepository;
         this.movimentacaoRepository = movimentacaoRepository;
+        this.itemCompraRepository = itemCompraRepository;
+        this.produtoFornecedorRepository = produtoFornecedorRepository;
     }
 
-    // Lista todos os produtos cadastrados.
+    @Transactional(readOnly = true)
     public List<Produto> listarProdutos() {
         return produtoRepository.findAll();
     }
 
-    // Busca um produto pelo ID.
+    @Transactional(readOnly = true)
     public Produto buscarProdutoPorId(Long id) {
 
         return produtoRepository.findById(id)
@@ -48,7 +57,7 @@ public class ProdutoService {
                 );
     }
 
-    // Busca produtos pelo nome ou SKU.
+    @Transactional(readOnly = true)
     public List<Produto> buscarProdutos(String termo) {
 
         if (termo == null || termo.isBlank()) {
@@ -58,14 +67,15 @@ public class ProdutoService {
             );
         }
 
+        String pesquisa = termo.trim();
+
         return produtoRepository
                 .findByNomeContainingIgnoreCaseOrSkuContainingIgnoreCase(
-                        termo.trim(),
-                        termo.trim()
+                        pesquisa,
+                        pesquisa
                 );
     }
 
-    // Verifica se a categoria informada existe.
     private Categoria buscarCategoria(Long categoriaId) {
 
         if (categoriaId == null) {
@@ -84,7 +94,7 @@ public class ProdutoService {
                 );
     }
 
-    // Cadastra um novo produto.
+    @Transactional
     public Produto cadastrarProduto(Produto produto) {
 
         if (produtoRepository.existsBySku(produto.getSku())) {
@@ -105,8 +115,7 @@ public class ProdutoService {
         return produtoRepository.save(produto);
     }
 
-    // Atualiza os dados de um produto existente.
-    // A quantidade em estoque não pode ser alterada diretamente.
+    @Transactional
     public Produto atualizarProduto(Long id, Produto dadosAtualizados) {
 
         Produto produtoExistente = buscarProdutoPorId(id);
@@ -134,9 +143,7 @@ public class ProdutoService {
         produtoExistente.setSku(dadosAtualizados.getSku());
         produtoExistente.setPreco(dadosAtualizados.getPreco());
 
-        // Não alteramos a quantidadeEstoque.
-        // O estoque será atualizado somente pelas movimentações.
-
+        // O estoque somente pode ser alterado pelas movimentações.
         produtoExistente.setEstoqueMinimo(
                 dadosAtualizados.getEstoqueMinimo()
         );
@@ -146,18 +153,29 @@ public class ProdutoService {
         return produtoRepository.save(produtoExistente);
     }
 
-    // Exclui um produto somente se não possuir movimentações.
+    @Transactional
     public void excluirProduto(Long id) {
 
         Produto produto = buscarProdutoPorId(id);
 
-        boolean possuiMovimentacoes =
-                movimentacaoRepository.existsByProdutoId(id);
-
-        if (possuiMovimentacoes) {
+        if (movimentacaoRepository.existsByProdutoId(id)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Não é possível excluir este produto porque existem movimentações de estoque registradas."
+            );
+        }
+
+        if (itemCompraRepository.existsByProdutoId(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Não é possível excluir este produto porque ele está vinculado ao histórico de compras."
+            );
+        }
+
+        if (produtoFornecedorRepository.existsByProdutoId(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Não é possível excluir este produto porque existem fornecedores vinculados a ele."
             );
         }
 

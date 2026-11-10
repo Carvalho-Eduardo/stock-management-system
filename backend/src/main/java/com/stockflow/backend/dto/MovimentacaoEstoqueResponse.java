@@ -3,6 +3,7 @@ package com.stockflow.backend.dto;
 
 import com.stockflow.backend.model.MovimentacaoEstoque;
 import com.stockflow.backend.model.TipoMovimentacao;
+import com.stockflow.backend.model.Usuario;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +30,10 @@ public class MovimentacaoEstoqueResponse {
 
     private LocalDateTime dataHora;
 
+    private Long usuarioId;
+
+    private String usuarioNome;
+
     public MovimentacaoEstoqueResponse() {
     }
 
@@ -54,6 +59,14 @@ public class MovimentacaoEstoqueResponse {
         this.observacao = movimentacao.getObservacao();
 
         this.dataHora = movimentacao.getDataHora();
+
+        // Registros antigos podem não possuir usuário associado.
+        Usuario usuario = movimentacao.getUsuario();
+
+        if (usuario != null) {
+            this.usuarioId = usuario.getId();
+            this.usuarioNome = usuario.getNome();
+        }
     }
 
     public Long getId() {
@@ -94,5 +107,13 @@ public class MovimentacaoEstoqueResponse {
 
     public LocalDateTime getDataHora() {
         return dataHora;
+    }
+
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+
+    public String getUsuarioNome() {
+        return usuarioNome;
     }
 }
