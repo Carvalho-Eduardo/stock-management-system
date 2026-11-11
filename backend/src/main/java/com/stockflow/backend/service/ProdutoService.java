@@ -97,6 +97,14 @@ public class ProdutoService {
     @Transactional
     public Produto cadastrarProduto(Produto produto) {
 
+        if (produto.getQuantidadeEstoque() == null
+                || produto.getQuantidadeEstoque() < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A quantidade em estoque deve ser informada e não pode ser negativa."
+            );
+        }
+
         if (produtoRepository.existsBySku(produto.getSku())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -143,7 +151,9 @@ public class ProdutoService {
         produtoExistente.setSku(dadosAtualizados.getSku());
         produtoExistente.setPreco(dadosAtualizados.getPreco());
 
-        // O estoque somente pode ser alterado pelas movimentações.
+        // O estoque existente é preservado.
+        // Somente as movimentações podem alterá-lo.
+
         produtoExistente.setEstoqueMinimo(
                 dadosAtualizados.getEstoqueMinimo()
         );

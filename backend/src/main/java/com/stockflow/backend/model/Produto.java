@@ -34,8 +34,6 @@ public class Produto {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal preco;
 
-    @NotNull(message = "A quantidade em estoque é obrigatória.")
-    @PositiveOrZero(message = "A quantidade em estoque não pode ser negativa.")
     @Column(nullable = false)
     private Integer quantidadeEstoque;
 
@@ -44,7 +42,6 @@ public class Produto {
     @Column(nullable = false)
     private Integer estoqueMinimo;
 
-    // Muitos produtos podem pertencer a uma mesma categoria.
     @NotNull(message = "A categoria do produto é obrigatória.")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categoria_id")
