@@ -44,7 +44,6 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(usuario.getEmail())
-                .claim("perfil", usuario.getPerfil())
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plusMillis(expiracaoMs)))
                 .signWith(chave)

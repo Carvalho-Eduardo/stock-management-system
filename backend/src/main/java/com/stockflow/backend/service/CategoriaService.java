@@ -7,6 +7,7 @@ import com.stockflow.backend.repository.ProdutoRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -16,21 +17,24 @@ public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
     private final ProdutoRepository produtoRepository;
+    private final AuditoriaService auditoriaService;
 
     public CategoriaService(
             CategoriaRepository categoriaRepository,
-            ProdutoRepository produtoRepository) {
-
+            ProdutoRepository produtoRepository,
+            AuditoriaService auditoriaService
+    ) {
         this.categoriaRepository = categoriaRepository;
         this.produtoRepository = produtoRepository;
+        this.auditoriaService = auditoriaService;
     }
 
-    // Lista todas as categorias cadastradas.
+    @Transactional(readOnly = true)
     public List<Categoria> listarCategorias() {
         return categoriaRepository.findAll();
     }
 
-    // Busca uma categoria pelo ID.
+    @Transactional(readOnly = true)
     public Categoria buscarCategoriaPorId(Long id) {
 
         return categoriaRepository.findById(id)
@@ -42,7 +46,7 @@ public class CategoriaService {
                 );
     }
 
-    // Cadastra uma nova categoria.
+    @Transactional
     public Categoria cadastrarCategoria(Categoria categoria) {
 
         String nome = categoria.getNome().trim();
@@ -56,13 +60,23 @@ public class CategoriaService {
 
         categoria.setNome(nome);
 
-        return categoriaRepository.save(categoria);
+        Categoria categoriaSalva = categoriaRepository.save(categoria);
+
+        auditoriaService.registrar(
+                "CADASTRO",
+                "CATEGORIAS",
+                categoriaSalva.getId(),
+                "Categoria " + categoriaSalva.getNome() + " cadastrada."
+        );
+
+        return categoriaSalva;
     }
 
-    // Atualiza uma categoria existente.
+    @Transactional
     public Categoria atualizarCategoria(
             Long id,
-            Categoria dadosAtualizados) {
+            Categoria dadosAtualizados
+    ) {
 
         Categoria categoriaExistente = buscarCategoriaPorId(id);
 
@@ -78,15 +92,31 @@ public class CategoriaService {
             );
         }
 
+        String nomeAnterior = categoriaExistente.getNome();
+
         categoriaExistente.setNome(nome);
         categoriaExistente.setDescricao(
                 dadosAtualizados.getDescricao()
         );
 
-        return categoriaRepository.save(categoriaExistente);
+        Categoria categoriaAtualizada =
+                categoriaRepository.save(categoriaExistente);
+
+        auditoriaService.registrar(
+                "EDICAO",
+                "CATEGORIAS",
+                categoriaAtualizada.getId(),
+                "Categoria alterada de "
+                        + nomeAnterior
+                        + " para "
+                        + categoriaAtualizada.getNome()
+                        + "."
+        );
+
+        return categoriaAtualizada;
     }
 
-    // Exclui uma categoria somente se ela não possuir produtos.
+    @Transactional
     public void excluirCategoria(Long id) {
 
         Categoria categoria = buscarCategoriaPorId(id);
@@ -101,6 +131,15 @@ public class CategoriaService {
             );
         }
 
+        String nomeCategoria = categoria.getNome();
+
         categoriaRepository.delete(categoria);
+
+        auditoriaService.registrar(
+                "EXCLUSAO",
+                "CATEGORIAS",
+                id,
+                "Categoria " + nomeCategoria + " excluída."
+        );
     }
 }

@@ -32,17 +32,20 @@ public class CompraService {
     private final FornecedorRepository fornecedorRepository;
     private final ProdutoRepository produtoRepository;
     private final MovimentacaoEstoqueService movimentacaoEstoqueService;
+    private final AuditoriaService auditoriaService;
 
     public CompraService(
             CompraRepository compraRepository,
             FornecedorRepository fornecedorRepository,
             ProdutoRepository produtoRepository,
-            MovimentacaoEstoqueService movimentacaoEstoqueService
+            MovimentacaoEstoqueService movimentacaoEstoqueService,
+            AuditoriaService auditoriaService
     ) {
         this.compraRepository = compraRepository;
         this.fornecedorRepository = fornecedorRepository;
         this.produtoRepository = produtoRepository;
         this.movimentacaoEstoqueService = movimentacaoEstoqueService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -97,6 +100,17 @@ public class CompraService {
 
         Compra compraSalva = compraRepository.save(compra);
 
+        auditoriaService.registrar(
+                "CADASTRO",
+                "COMPRAS",
+                compraSalva.getId(),
+                "Compra #" + compraSalva.getId()
+                        + " cadastrada para o fornecedor "
+                        + fornecedor.getNome()
+                        + ". Valor total: R$ "
+                        + valorTotal.toPlainString()
+        );
+
         return new CompraResponse(compraSalva);
     }
 
@@ -147,6 +161,18 @@ public class CompraService {
 
         Compra compraAtualizada = compraRepository.save(compra);
 
+        auditoriaService.registrar(
+                "RECEBIMENTO",
+                "COMPRAS",
+                compraAtualizada.getId(),
+                "Compra #" + compraAtualizada.getId()
+                        + " recebida. Fornecedor: "
+                        + compra.getFornecedor().getNome()
+                        + ". Estoque atualizado para os "
+                        + compra.getItens().size()
+                        + " item(ns) da compra."
+        );
+
         return new CompraResponse(compraAtualizada);
     }
 
@@ -165,6 +191,15 @@ public class CompraService {
         compra.setStatus(StatusCompra.CANCELADA);
 
         Compra compraAtualizada = compraRepository.save(compra);
+
+        auditoriaService.registrar(
+                "CANCELAMENTO",
+                "COMPRAS",
+                compraAtualizada.getId(),
+                "Compra #" + compraAtualizada.getId()
+                        + " cancelada. Fornecedor: "
+                        + compra.getFornecedor().getNome()
+        );
 
         return new CompraResponse(compraAtualizada);
     }

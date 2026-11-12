@@ -7,10 +7,8 @@ import {
   Truck,
   ShoppingCart,
   ArrowLeftRight,
-  Users,
   ClipboardList,
   Boxes,
-  Bell,
 } from "lucide-react";
 
 const grupos = [
@@ -34,10 +32,7 @@ const grupos = [
   },
   {
     titulo: "SISTEMA",
-    itens: [
-      { nome: "Usuários", caminho: "/usuarios", icone: Users },
-      { nome: "Auditoria", caminho: "/auditoria", icone: ClipboardList },
-    ],
+    itens: [{ nome: "Auditoria", caminho: "/auditoria", icone: ClipboardList }],
   },
 ];
 
@@ -85,23 +80,21 @@ function Sidebar() {
         ))}
       </nav>
 
-      <div className="flex w-full shrink-0 flex-col items-center gap-4 border-t border-white/[0.06] py-5">
-        <button
-          type="button"
-          title="Notificações"
-          aria-label="Notificações"
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-[#88888F] transition hover:bg-white/[0.06] hover:text-white"
-        >
-          <Bell size={19} strokeWidth={1.8} />
-        </button>
-
-        <div
-          translate="no"
-          title="StockFlow"
-          className="notranslate flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#A9BFFF]/30 bg-[#A9BFFF]/10 text-xs font-semibold text-[#A9BFFF]"
+      <div className="flex w-full shrink-0 items-center justify-center border-t border-white/[0.06] py-5">
+        <NavLink
+          to="/usuarios"
+          title="Meu perfil"
+          aria-label="Abrir meu perfil"
+          className={({ isActive }) =>
+            `flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition ${
+              isActive
+                ? "border-[#A9BFFF] bg-[#A9BFFF]/20 text-[#A9BFFF]"
+                : "border-[#A9BFFF]/30 bg-[#A9BFFF]/10 text-[#A9BFFF] hover:border-[#A9BFFF] hover:bg-[#A9BFFF]/20"
+            }`
+          }
         >
           SF
-        </div>
+        </NavLink>
       </div>
     </aside>
   );

@@ -9,14 +9,14 @@ public class UsuarioResponse {
     private Long id;
     private String nome;
     private String email;
-    private String perfil;
+    private boolean ativo;
     private LocalDateTime dataCadastro;
 
     public UsuarioResponse(Usuario usuario) {
         this.id = usuario.getId();
         this.nome = usuario.getNome();
         this.email = usuario.getEmail();
-        this.perfil = usuario.getPerfil();
+        this.ativo = usuario.isAtivo();
         this.dataCadastro = usuario.getDataCadastro();
     }
 
@@ -32,8 +32,8 @@ public class UsuarioResponse {
         return email;
     }
 
-    public String getPerfil() {
-        return perfil;
+    public boolean isAtivo() {
+        return ativo;
     }
 
     public LocalDateTime getDataCadastro() {

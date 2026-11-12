@@ -23,15 +23,18 @@ public class ProdutoFornecedorService {
     private final ProdutoFornecedorRepository vinculoRepository;
     private final ProdutoRepository produtoRepository;
     private final FornecedorRepository fornecedorRepository;
+    private final AuditoriaService auditoriaService;
 
     public ProdutoFornecedorService(
             ProdutoFornecedorRepository vinculoRepository,
             ProdutoRepository produtoRepository,
-            FornecedorRepository fornecedorRepository
+            FornecedorRepository fornecedorRepository,
+            AuditoriaService auditoriaService
     ) {
         this.vinculoRepository = vinculoRepository;
         this.produtoRepository = produtoRepository;
         this.fornecedorRepository = fornecedorRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -71,6 +74,15 @@ public class ProdutoFornecedorService {
         vinculo.setFornecedor(fornecedor);
 
         ProdutoFornecedor salvo = vinculoRepository.save(vinculo);
+
+        auditoriaService.registrar(
+                "VINCULO",
+                "PRODUTOS_FORNECEDORES",
+                salvo.getId(),
+                "Produto " + produto.getNome()
+                        + " vinculado ao fornecedor "
+                        + fornecedor.getNome() + "."
+        );
 
         return new ProdutoFornecedorResponse(salvo);
     }
@@ -128,6 +140,18 @@ public class ProdutoFornecedorService {
                         "Vínculo entre produto e fornecedor não encontrado."
                 ));
 
+        String nomeProduto = vinculo.getProduto().getNome();
+        String nomeFornecedor = vinculo.getFornecedor().getNome();
+
         vinculoRepository.delete(vinculo);
+
+        auditoriaService.registrar(
+                "DESVINCULO",
+                "PRODUTOS_FORNECEDORES",
+                id,
+                "Produto " + nomeProduto
+                        + " desvinculado do fornecedor "
+                        + nomeFornecedor + "."
+        );
     }
 }

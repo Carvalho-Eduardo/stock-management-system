@@ -21,15 +21,18 @@ public class FornecedorService {
     private final FornecedorRepository fornecedorRepository;
     private final CompraRepository compraRepository;
     private final ProdutoFornecedorRepository produtoFornecedorRepository;
+    private final AuditoriaService auditoriaService;
 
     public FornecedorService(
             FornecedorRepository fornecedorRepository,
             CompraRepository compraRepository,
-            ProdutoFornecedorRepository produtoFornecedorRepository
+            ProdutoFornecedorRepository produtoFornecedorRepository,
+            AuditoriaService auditoriaService
     ) {
         this.fornecedorRepository = fornecedorRepository;
         this.compraRepository = compraRepository;
         this.produtoFornecedorRepository = produtoFornecedorRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -49,6 +52,13 @@ public class FornecedorService {
         atualizarDados(fornecedor, request, cnpj);
 
         Fornecedor fornecedorSalvo = fornecedorRepository.save(fornecedor);
+
+        auditoriaService.registrar(
+                "CADASTRO",
+                "FORNECEDORES",
+                fornecedorSalvo.getId(),
+                "Fornecedor " + fornecedorSalvo.getNome() + " cadastrado."
+        );
 
         return new FornecedorResponse(fornecedorSalvo);
     }
@@ -107,9 +117,23 @@ public class FornecedorService {
             );
         }
 
+        String nomeAnterior = fornecedor.getNome();
+
         atualizarDados(fornecedor, request, cnpj);
 
-        Fornecedor fornecedorAtualizado = fornecedorRepository.save(fornecedor);
+        Fornecedor fornecedorAtualizado =
+                fornecedorRepository.save(fornecedor);
+
+        auditoriaService.registrar(
+                "EDICAO",
+                "FORNECEDORES",
+                fornecedorAtualizado.getId(),
+                "Fornecedor alterado de "
+                        + nomeAnterior
+                        + " para "
+                        + fornecedorAtualizado.getNome()
+                        + "."
+        );
 
         return new FornecedorResponse(fornecedorAtualizado);
     }
@@ -133,7 +157,16 @@ public class FornecedorService {
             );
         }
 
+        String nomeFornecedor = fornecedor.getNome();
+
         fornecedorRepository.delete(fornecedor);
+
+        auditoriaService.registrar(
+                "EXCLUSAO",
+                "FORNECEDORES",
+                id,
+                "Fornecedor " + nomeFornecedor + " excluído."
+        );
     }
 
     private Fornecedor encontrarFornecedor(Long id) {

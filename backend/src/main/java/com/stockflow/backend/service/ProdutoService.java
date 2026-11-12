@@ -25,19 +25,22 @@ public class ProdutoService {
     private final MovimentacaoEstoqueRepository movimentacaoRepository;
     private final ItemCompraRepository itemCompraRepository;
     private final ProdutoFornecedorRepository produtoFornecedorRepository;
+    private final AuditoriaService auditoriaService;
 
     public ProdutoService(
             ProdutoRepository produtoRepository,
             CategoriaRepository categoriaRepository,
             MovimentacaoEstoqueRepository movimentacaoRepository,
             ItemCompraRepository itemCompraRepository,
-            ProdutoFornecedorRepository produtoFornecedorRepository
+            ProdutoFornecedorRepository produtoFornecedorRepository,
+            AuditoriaService auditoriaService
     ) {
         this.produtoRepository = produtoRepository;
         this.categoriaRepository = categoriaRepository;
         this.movimentacaoRepository = movimentacaoRepository;
         this.itemCompraRepository = itemCompraRepository;
         this.produtoFornecedorRepository = produtoFornecedorRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -120,7 +123,18 @@ public class ProdutoService {
 
         produto.setCategoria(categoria);
 
-        return produtoRepository.save(produto);
+        Produto produtoSalvo = produtoRepository.save(produto);
+
+        auditoriaService.registrar(
+                "CADASTRO",
+                "PRODUTOS",
+                produtoSalvo.getId(),
+                "Produto " + produtoSalvo.getNome()
+                        + " (SKU: " + produtoSalvo.getSku()
+                        + ") cadastrado."
+        );
+
+        return produtoSalvo;
     }
 
     @Transactional
@@ -146,6 +160,9 @@ public class ProdutoService {
 
         Categoria categoria = buscarCategoria(categoriaId);
 
+        String nomeAnterior = produtoExistente.getNome();
+        String skuAnterior = produtoExistente.getSku();
+
         produtoExistente.setNome(dadosAtualizados.getNome());
         produtoExistente.setDescricao(dadosAtualizados.getDescricao());
         produtoExistente.setSku(dadosAtualizados.getSku());
@@ -160,7 +177,20 @@ public class ProdutoService {
 
         produtoExistente.setCategoria(categoria);
 
-        return produtoRepository.save(produtoExistente);
+        Produto produtoAtualizado = produtoRepository.save(produtoExistente);
+
+        auditoriaService.registrar(
+                "EDICAO",
+                "PRODUTOS",
+                produtoAtualizado.getId(),
+                "Produto alterado: "
+                        + nomeAnterior + " (SKU: " + skuAnterior + ")"
+                        + " para "
+                        + produtoAtualizado.getNome()
+                        + " (SKU: " + produtoAtualizado.getSku() + ")."
+        );
+
+        return produtoAtualizado;
     }
 
     @Transactional
@@ -189,6 +219,17 @@ public class ProdutoService {
             );
         }
 
+        String nomeProduto = produto.getNome();
+        String skuProduto = produto.getSku();
+
         produtoRepository.delete(produto);
+
+        auditoriaService.registrar(
+                "EXCLUSAO",
+                "PRODUTOS",
+                id,
+                "Produto " + nomeProduto
+                        + " (SKU: " + skuProduto + ") excluído."
+        );
     }
 }

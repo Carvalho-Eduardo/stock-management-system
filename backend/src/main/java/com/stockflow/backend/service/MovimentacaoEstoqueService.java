@@ -26,24 +26,26 @@ public class MovimentacaoEstoqueService {
     private final MovimentacaoEstoqueRepository movimentacaoRepository;
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
 
     public MovimentacaoEstoqueService(
             MovimentacaoEstoqueRepository movimentacaoRepository,
             ProdutoRepository produtoRepository,
-            UsuarioRepository usuarioRepository) {
-
+            UsuarioRepository usuarioRepository,
+            AuditoriaService auditoriaService
+    ) {
         this.movimentacaoRepository = movimentacaoRepository;
         this.produtoRepository = produtoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.auditoriaService = auditoriaService;
     }
 
-    // Registra uma entrada de produtos no estoque.
     @Transactional
     public MovimentacaoEstoque registrarEntrada(
             Long produtoId,
             Integer quantidade,
-            String observacao) {
-
+            String observacao
+    ) {
         return registrarMovimentacao(
                 produtoId,
                 quantidade,
@@ -52,13 +54,12 @@ public class MovimentacaoEstoqueService {
         );
     }
 
-    // Registra uma saída de produtos do estoque.
     @Transactional
     public MovimentacaoEstoque registrarSaida(
             Long produtoId,
             Integer quantidade,
-            String observacao) {
-
+            String observacao
+    ) {
         return registrarMovimentacao(
                 produtoId,
                 quantidade,
@@ -67,12 +68,12 @@ public class MovimentacaoEstoqueService {
         );
     }
 
-    // Centraliza as regras de entrada e saída.
     private MovimentacaoEstoque registrarMovimentacao(
             Long produtoId,
             Integer quantidade,
             String observacao,
-            TipoMovimentacao tipo) {
+            TipoMovimentacao tipo
+    ) {
 
         if (produtoId == null) {
             throw new ResponseStatusException(
@@ -95,10 +96,8 @@ public class MovimentacaoEstoqueService {
             );
         }
 
-        // Identifica o usuário autenticado.
         Usuario usuario = obterUsuarioAutenticado();
 
-        // Busca o produto com bloqueio durante a transação.
         Produto produto = produtoRepository.buscarPorIdComBloqueio(produtoId)
                 .orElseThrow(() ->
                         new ResponseStatusException(
@@ -146,11 +145,9 @@ public class MovimentacaoEstoqueService {
             estoquePosterior = estoqueAnterior - quantidade;
         }
 
-        // Atualiza o estoque do produto.
         produto.setQuantidadeEstoque(estoquePosterior);
         produtoRepository.save(produto);
 
-        // Cria o registro histórico da movimentação.
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
 
         movimentacao.setProduto(produto);
@@ -166,12 +163,33 @@ public class MovimentacaoEstoqueService {
                         : observacao.trim()
         );
 
-        // A atualização do produto e o histórico são salvos
-        // dentro da mesma transação.
-        return movimentacaoRepository.save(movimentacao);
+        MovimentacaoEstoque movimentacaoSalva =
+                movimentacaoRepository.save(movimentacao);
+
+        auditoriaService.registrar(
+                tipo == TipoMovimentacao.ENTRADA ? "ENTRADA" : "SAIDA",
+                "ESTOQUE",
+                movimentacaoSalva.getId(),
+                tipo == TipoMovimentacao.ENTRADA
+                        ? "Entrada de " + quantidade
+                                + " unidade(s) do produto "
+                                + produto.getNome()
+                                + ". Estoque: "
+                                + estoqueAnterior
+                                + " → "
+                                + estoquePosterior
+                        : "Saída de " + quantidade
+                                + " unidade(s) do produto "
+                                + produto.getNome()
+                                + ". Estoque: "
+                                + estoqueAnterior
+                                + " → "
+                                + estoquePosterior
+        );
+
+        return movimentacaoSalva;
     }
 
-    // Recupera o usuário associado ao token da sessão.
     private Usuario obterUsuarioAutenticado() {
 
         Authentication authentication =
@@ -205,18 +223,15 @@ public class MovimentacaoEstoqueService {
                 );
     }
 
-    // Lista todo o histórico de movimentações.
     @Transactional(readOnly = true)
     public List<MovimentacaoEstoque> listarMovimentacoes() {
-
-        return movimentacaoRepository
-                .findAllByOrderByDataHoraDesc();
+        return movimentacaoRepository.findAllByOrderByDataHoraDesc();
     }
 
-    // Lista o histórico de um produto específico.
     @Transactional(readOnly = true)
     public List<MovimentacaoEstoque> listarMovimentacoesPorProduto(
-            Long produtoId) {
+            Long produtoId
+    ) {
 
         if (produtoId == null) {
             throw new ResponseStatusException(
@@ -236,10 +251,10 @@ public class MovimentacaoEstoqueService {
                 .findByProdutoIdOrderByDataHoraDesc(produtoId);
     }
 
-    // Lista movimentações filtradas pelo tipo.
     @Transactional(readOnly = true)
     public List<MovimentacaoEstoque> listarMovimentacoesPorTipo(
-            TipoMovimentacao tipo) {
+            TipoMovimentacao tipo
+    ) {
 
         if (tipo == null) {
             throw new ResponseStatusException(

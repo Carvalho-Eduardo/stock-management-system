@@ -43,28 +43,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authorizationHeader = request.getHeader("Authorization");
 
-        if (authorizationHeader != null &&
-                authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader != null
+                && authorizationHeader.startsWith("Bearer ")) {
 
             String token = authorizationHeader.substring(7);
 
             try {
-
                 String email = jwtService.extrairEmail(token);
 
-                if (email != null &&
-                        SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (email != null
+                        && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                     Usuario usuario = usuarioRepository
                             .findByEmailIgnoreCase(email)
                             .orElse(null);
 
-                    if (usuario != null) {
+                    if (usuario != null && usuario.isAtivo()) {
 
                         var authorities = List.of(
-                                new SimpleGrantedAuthority(
-                                        "ROLE_" + usuario.getPerfil()
-                                )
+                                new SimpleGrantedAuthority("ROLE_USER")
                         );
 
                         var authentication =
@@ -85,7 +82,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
             } catch (JwtException | IllegalArgumentException exception) {
-
                 SecurityContextHolder.clearContext();
             }
         }

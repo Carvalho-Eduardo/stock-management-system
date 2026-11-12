@@ -21,19 +21,27 @@ public class Usuario {
     @Column(nullable = false)
     private String senha;
 
+    // Campo legado mantido para compatibilidade com o banco existente.
     @Column(nullable = false, length = 30)
-    private String perfil = "OPERADOR";
+    private String perfil = "USUARIO";
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1) NOT NULL DEFAULT 1")
+    private boolean ativo = true;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCadastro;
 
+    @Lob
+    @Column(name = "foto_perfil", columnDefinition = "LONGBLOB")
+    private byte[] fotoPerfil;
+
+    @Column(name = "foto_perfil_tipo", length = 50)
+    private String fotoPerfilTipo;
+
     @PrePersist
     protected void aoCriar() {
         dataCadastro = LocalDateTime.now();
-
-        if (perfil == null || perfil.isBlank()) {
-            perfil = "OPERADOR";
-        }
+        perfil = "USUARIO";
     }
 
     public Usuario() {
@@ -76,7 +84,15 @@ public class Usuario {
     }
 
     public void setPerfil(String perfil) {
-        this.perfil = perfil;
+        this.perfil = "USUARIO";
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
     }
 
     public LocalDateTime getDataCadastro() {
@@ -85,5 +101,21 @@ public class Usuario {
 
     public void setDataCadastro(LocalDateTime dataCadastro) {
         this.dataCadastro = dataCadastro;
+    }
+
+    public byte[] getFotoPerfil() {
+        return fotoPerfil;
+    }
+
+    public void setFotoPerfil(byte[] fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
+    }
+
+    public String getFotoPerfilTipo() {
+        return fotoPerfilTipo;
+    }
+
+    public void setFotoPerfilTipo(String fotoPerfilTipo) {
+        this.fotoPerfilTipo = fotoPerfilTipo;
     }
 }

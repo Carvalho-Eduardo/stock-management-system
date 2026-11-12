@@ -69,34 +69,9 @@ public class SecurityConfig {
                                 "/api/usuarios/login"
                         ).permitAll()
 
-                        // Tratamento de erros.
                         .requestMatchers("/error").permitAll()
 
-                        // Gerenciamento de usuários: administrador.
-                        .requestMatchers("/api/usuarios/**")
-                        .hasRole("ADMINISTRADOR")
-
-                        // Operadores também podem movimentar estoque.
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/movimentacoes/entrada",
-                                "/api/movimentacoes/saida"
-                        ).hasAnyRole("ADMINISTRADOR", "OPERADOR")
-
-                        // Outras operações de escrita: administrador.
-                        .requestMatchers(HttpMethod.POST, "/api/**")
-                        .hasRole("ADMINISTRADOR")
-
-                        .requestMatchers(HttpMethod.PUT, "/api/**")
-                        .hasRole("ADMINISTRADOR")
-
-                        .requestMatchers(HttpMethod.PATCH, "/api/**")
-                        .hasRole("ADMINISTRADOR")
-
-                        .requestMatchers(HttpMethod.DELETE, "/api/**")
-                        .hasRole("ADMINISTRADOR")
-
-                        // Qualquer outra rota exige autenticação.
+                        // Todos os usuários autenticados possuem o mesmo acesso.
                         .anyRequest().authenticated()
                 )
 
@@ -112,7 +87,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, ex) -> {
                             response.sendError(
                                     HttpServletResponse.SC_FORBIDDEN,
-                                    "Você não possui permissão para acessar este recurso."
+                                    "Acesso não permitido."
                             );
                         })
                 )
@@ -130,5 +105,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
-    

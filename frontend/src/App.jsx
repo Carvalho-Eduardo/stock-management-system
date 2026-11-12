@@ -2,11 +2,16 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import MainLayout from "./components/layout/MainLayout";
-import PlaceholderPage from "./components/ui/PlaceholderPage";
 
 const Dashboard = lazy(() => import("./pages/Dashboard/Dashboard"));
 const Produtos = lazy(() => import("./pages/Produtos/Produtos"));
+const Categorias = lazy(() => import("./pages/Categorias/Categorias"));
+const Fornecedores = lazy(() => import("./pages/Fornecedores/Fornecedores"));
 const Login = lazy(() => import("./pages/Login/Login"));
+const Compras = lazy(() => import("./pages/Compras/Compras"));
+const Movimentacoes = lazy(() => import("./pages/Movimentacoes/Movimentacoes"));
+const Usuarios = lazy(() => import("./pages/Usuarios/Usuarios"));
+const Auditoria = lazy(() => import("./pages/Auditoria/Auditoria"));
 
 function Carregamento() {
   return (
@@ -55,60 +60,54 @@ function App() {
           <Route
             path="/categorias"
             element={
-              <PlaceholderPage
-                titulo="Categorias"
-                descricao="Organize os produtos por categorias."
-              />
+              <Suspense fallback={<Carregamento />}>
+                <Categorias />
+              </Suspense>
             }
           />
 
           <Route
             path="/fornecedores"
             element={
-              <PlaceholderPage
-                titulo="Fornecedores"
-                descricao="Gerencie os fornecedores do sistema."
-              />
+              <Suspense fallback={<Carregamento />}>
+                <Fornecedores />
+              </Suspense>
             }
           />
 
           <Route
             path="/compras"
             element={
-              <PlaceholderPage
-                titulo="Compras"
-                descricao="Acompanhe e gerencie as compras realizadas."
-              />
+              <Suspense fallback={<Carregamento />}>
+                <Compras />
+              </Suspense>
             }
           />
 
           <Route
             path="/movimentacoes"
             element={
-              <PlaceholderPage
-                titulo="Movimentações"
-                descricao="Consulte as entradas e saídas do estoque."
-              />
+              <Suspense fallback={<Carregamento />}>
+                <Movimentacoes />
+              </Suspense>
             }
           />
 
           <Route
             path="/usuarios"
             element={
-              <PlaceholderPage
-                titulo="Usuários"
-                descricao="Gerencie os usuários e suas permissões."
-              />
+              <Suspense fallback={<Carregamento />}>
+                <Usuarios />
+              </Suspense>
             }
           />
 
           <Route
             path="/auditoria"
             element={
-              <PlaceholderPage
-                titulo="Auditoria"
-                descricao="Consulte o histórico de ações realizadas no sistema."
-              />
+              <Suspense fallback={<Carregamento />}>
+                <Auditoria />
+              </Suspense>
             }
           />
         </Route>
