@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout from "./components/layout/MainLayout";
 
@@ -25,10 +25,22 @@ function Carregamento() {
   );
 }
 
+// Protege as páginas que exigem autenticação.
+function RotaProtegida({ children }) {
+  const token = localStorage.getItem("stockflow_token");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Página pública de login */}
         <Route
           path="/login"
           element={
@@ -38,7 +50,14 @@ function App() {
           }
         />
 
-        <Route element={<MainLayout />}>
+        {/* Todas as páginas abaixo exigem autenticação */}
+        <Route
+          element={
+            <RotaProtegida>
+              <MainLayout />
+            </RotaProtegida>
+          }
+        >
           <Route
             path="/"
             element={
@@ -111,6 +130,9 @@ function App() {
             }
           />
         </Route>
+
+        {/* Redireciona endereços desconhecidos */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
