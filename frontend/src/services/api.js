@@ -1,8 +1,7 @@
-
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   headers: {
     "Content-Type": "application/json; charset=utf-8",
   },
@@ -81,7 +80,8 @@ api.interceptors.response.use(
     } else {
       error.response = {
         data: {
-          message: "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
+          message:
+            "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
         },
       };
     }
