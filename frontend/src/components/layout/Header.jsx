@@ -40,16 +40,6 @@ function Header({ onMenuClick }) {
           <Home size={20} strokeWidth={1.9} />
         </Link>
 
-        <button
-          type="button"
-          onClick={onMenuClick}
-          aria-label="Abrir menu de navegação"
-          aria-haspopup="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] text-[#A1A1AA] transition hover:bg-white/[0.06] hover:text-white md:hidden"
-        >
-          <Menu size={20} />
-        </button>
-
         <div className="min-w-0">
           <div className="mb-1 hidden items-center gap-2 text-[11px] text-[#77777F] sm:flex">
             <span>StockFlow</span>
@@ -64,6 +54,16 @@ function Header({ onMenuClick }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-3 sm:gap-6">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Abrir menu de navegação"
+          aria-haspopup="true"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] text-[#A1A1AA] transition hover:bg-white/[0.06] hover:text-white md:hidden"
+        >
+          <Menu size={20} />
+        </button>
+
         <div className="hidden text-right md:block">
           <p className="max-w-40 truncate text-xs font-semibold text-[#E8E8EC]">
             {nome}
