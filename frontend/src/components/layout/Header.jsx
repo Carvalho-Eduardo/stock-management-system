@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { ChevronRight, UserRound, Menu } from "lucide-react";
+import { ChevronRight, UserRound, Menu, Home } from "lucide-react";
 
 const titulosPaginas = {
   "/": "Dashboard",
+  "/dashboard": "Dashboard",
   "/produtos": "Produtos",
   "/categorias": "Categorias",
   "/fornecedores": "Fornecedores",
@@ -29,11 +30,21 @@ function Header({ onMenuClick }) {
 
   return (
     <header className="flex min-h-[68px] shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 sm:min-h-[76px] sm:px-8">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <Link
+          to="/"
+          aria-label="Ir para o início"
+          title="Início"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] text-[#A9BFFF] transition hover:bg-white/[0.06] hover:text-white md:hidden"
+        >
+          <Home size={20} strokeWidth={1.9} />
+        </Link>
+
         <button
           type="button"
           onClick={onMenuClick}
           aria-label="Abrir menu de navegação"
+          aria-haspopup="true"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] text-[#A1A1AA] transition hover:bg-white/[0.06] hover:text-white md:hidden"
         >
           <Menu size={20} />
@@ -46,14 +57,14 @@ function Header({ onMenuClick }) {
             <span className="text-[#A9BFFF]">{titulo}</span>
           </div>
 
-          <p className="truncate text-base font-semibold tracking-tight text-white sm:text-base">
+          <p className="truncate text-base font-semibold tracking-tight text-white">
             {titulo}
           </p>
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-3 sm:gap-6">
-        <div className="hidden text-right sm:block">
+        <div className="hidden text-right md:block">
           <p className="max-w-40 truncate text-xs font-semibold text-[#E8E8EC]">
             {nome}
           </p>
@@ -65,7 +76,7 @@ function Header({ onMenuClick }) {
           translate="no"
           title="Acessar meu perfil"
           aria-label="Acessar meu perfil"
-          className={`notranslate flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition ${
+          className={`notranslate hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border transition md:flex ${
             location.pathname === "/usuarios"
               ? "border-[#A9BFFF] bg-[#A9BFFF]/20 text-[#A9BFFF]"
               : "border-[#477FFF]/40 bg-[#477FFF]/10 text-[#A9BFFF] hover:border-[#A9BFFF] hover:bg-[#A9BFFF]/20"

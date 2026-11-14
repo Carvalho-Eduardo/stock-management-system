@@ -21,7 +21,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Padroniza as mensagens retornadas pelo backend.
+// Padroniza as mensagens e trata sessões expiradas.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -56,9 +56,31 @@ api.interceptors.response.use(
         }
       }
 
-      if (!error.response.data?.message) {
-        const status = error.response.status;
+      const status = error.response.status;
+      const urlRequisicao = (error.config?.url || "")
+        .split("?")[0]
+        .replace(/\/+$/, "");
 
+      // Não trata erros de autenticação como sessão expirada.
+      const requisicaoDeLogin =
+        urlRequisicao.endsWith("/usuarios/login") ||
+        urlRequisicao.endsWith("/usuarios/cadastro");
+
+      // Encerra a sessão quando o backend rejeita um token.
+      if (
+        status === 401 &&
+        !requisicaoDeLogin &&
+        localStorage.getItem("stockflow_token")
+      ) {
+        localStorage.removeItem("stockflow_token");
+        localStorage.removeItem("stockflow_usuario");
+
+        if (window.location.pathname !== "/login") {
+          window.location.replace("/login");
+        }
+      }
+
+      if (!error.response.data?.message) {
         const mensagensPorStatus = {
           400: "Os dados enviados são inválidos. Verifique os campos e tente novamente.",
           401: "Sua sessão expirou ou não está autenticada. Entre novamente no sistema.",

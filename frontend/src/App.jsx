@@ -1,3 +1,4 @@
+
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -19,13 +20,15 @@ function Carregamento() {
       <div className="flex flex-col items-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#29292D] border-t-[#A9BFFF]" />
 
-        <p className="text-xs text-[#A1A1AA]">Carregando página...</p>
+        <p className="text-xs text-[#A1A1AA]">
+          Carregando página...
+        </p>
       </div>
     </div>
   );
 }
 
-// Protege as páginas que exigem autenticação.
+// Protege todas as páginas que exigem autenticação.
 function RotaProtegida({ children }) {
   const token = localStorage.getItem("stockflow_token");
 

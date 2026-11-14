@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   LockKeyhole,
   Mail,
@@ -10,6 +11,7 @@ import {
   CheckCircle2,
   UserPlus,
 } from "lucide-react";
+
 import api from "../../services/api";
 
 function Login() {
@@ -34,6 +36,7 @@ function Login() {
       ...anterior,
       [campo]: valor,
     }));
+
     setErro("");
     setSucesso("");
   };
@@ -42,6 +45,7 @@ function Login() {
     setModoCadastro((anterior) => !anterior);
     setErro("");
     setSucesso("");
+
     setFormulario({
       nome: "",
       email: "",
@@ -175,7 +179,7 @@ function Login() {
   };
 
   const campo =
-    "w-full rounded-xl border border-white/[0.08] bg-[#101014] px-4 py-3 pl-11 text-sm text-white outline-none transition placeholder:text-[#52525B] focus:border-[#A9BFFF]/50 focus:ring-2 focus:ring-[#A9BFFF]/10";
+    "w-full rounded-xl border border-white/[0.08] bg-[#101014] px-4 py-3 pl-11 text-base sm:text-sm text-white outline-none transition placeholder:text-[#52525B] focus:border-[#A9BFFF]/50 focus:ring-2 focus:ring-[#A9BFFF]/10";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#09090D] px-4 py-10">
