@@ -231,11 +231,7 @@ export default function Usuarios() {
       const dados = new FormData();
       dados.append("arquivo", arquivoFoto);
 
-      await api.post("/usuarios/me/foto", dados, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await api.put("/usuarios/me/foto", dados);
 
       setArquivoFoto(null);
       setSucesso("Foto de perfil atualizada com sucesso.");
