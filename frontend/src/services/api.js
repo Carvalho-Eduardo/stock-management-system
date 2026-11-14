@@ -2,18 +2,26 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
-  headers: {
-    "Content-Type": "application/json; charset=utf-8",
-  },
 });
 
-// Adiciona o token de autenticação às requisições.
+// Adiciona o token e ajusta o Content-Type conforme o tipo de requisição.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("stockflow_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Permite que o navegador configure o multipart/form-data
+    // com o boundary correto ao enviar arquivos.
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      if (typeof config.headers.delete === "function") {
+        config.headers.delete("Content-Type");
+      } else {
+        delete config.headers["Content-Type"];
+        delete config.headers["content-type"];
+      }
     }
 
     return config;
@@ -61,12 +69,10 @@ api.interceptors.response.use(
         .split("?")[0]
         .replace(/\/+$/, "");
 
-      // Não trata erros de autenticação como sessão expirada.
       const requisicaoDeLogin =
         urlRequisicao.endsWith("/usuarios/login") ||
         urlRequisicao.endsWith("/usuarios/cadastro");
 
-      // Encerra a sessão quando o backend rejeita um token.
       if (
         status === 401 &&
         !requisicaoDeLogin &&

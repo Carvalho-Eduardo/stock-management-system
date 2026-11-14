@@ -2,6 +2,9 @@
 package com.stockflow.backend.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,7 +34,7 @@ public class Usuario {
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCadastro;
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARBINARY)
     @Column(name = "foto_perfil", columnDefinition = "LONGBLOB")
     private byte[] fotoPerfil;
 
