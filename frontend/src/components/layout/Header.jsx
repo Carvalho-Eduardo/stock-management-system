@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, UserRound, Menu, Home } from "lucide-react";
+
+import api from "../../services/api";
 
 const titulosPaginas = {
   "/": "Dashboard",
@@ -27,6 +30,56 @@ function Header({ onMenuClick }) {
 
   const usuario = obterUsuario();
   const nome = usuario?.nome || "Usuário";
+
+  const [fotoUrl, setFotoUrl] = useState("");
+
+  useEffect(() => {
+    let ativo = true;
+    let urlAtual = "";
+
+    async function carregarFoto() {
+      try {
+        const resposta = await api.get("/usuarios/me/foto", {
+          responseType: "blob",
+        });
+
+        if (!ativo || !resposta.data || resposta.data.size === 0) {
+          return;
+        }
+
+        const novaUrl = URL.createObjectURL(resposta.data);
+
+        if (urlAtual) {
+          URL.revokeObjectURL(urlAtual);
+        }
+
+        urlAtual = novaUrl;
+        setFotoUrl(novaUrl);
+      } catch {
+        if (ativo) {
+          setFotoUrl("");
+        }
+      }
+    }
+
+    function atualizarFoto() {
+      carregarFoto();
+    }
+
+    carregarFoto();
+
+    window.addEventListener("stockflow:foto-atualizada", atualizarFoto);
+
+    return () => {
+      ativo = false;
+
+      window.removeEventListener("stockflow:foto-atualizada", atualizarFoto);
+
+      if (urlAtual) {
+        URL.revokeObjectURL(urlAtual);
+      }
+    };
+  }, []);
 
   return (
     <header className="flex min-h-[68px] shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 sm:min-h-[76px] sm:px-8">
@@ -76,13 +129,21 @@ function Header({ onMenuClick }) {
           translate="no"
           title="Acessar meu perfil"
           aria-label="Acessar meu perfil"
-          className={`notranslate hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border transition md:flex ${
+          className={`notranslate hidden h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border transition md:flex ${
             location.pathname === "/usuarios"
               ? "border-[#A9BFFF] bg-[#A9BFFF]/20 text-[#A9BFFF]"
               : "border-[#477FFF]/40 bg-[#477FFF]/10 text-[#A9BFFF] hover:border-[#A9BFFF] hover:bg-[#A9BFFF]/20"
           }`}
         >
-          <UserRound size={19} strokeWidth={1.8} />
+          {fotoUrl ? (
+            <img
+              src={fotoUrl}
+              alt="Foto do perfil"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <UserRound size={19} strokeWidth={1.8} />
+          )}
         </Link>
       </div>
     </header>

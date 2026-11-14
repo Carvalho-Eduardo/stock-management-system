@@ -95,6 +95,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Reconhecimento das propriedades personalizadas -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Testes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

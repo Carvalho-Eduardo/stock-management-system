@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import {
@@ -10,6 +11,8 @@ import {
   ClipboardList,
   Boxes,
 } from "lucide-react";
+
+import api from "../../services/api";
 
 const grupos = [
   {
@@ -37,6 +40,56 @@ const grupos = [
 ];
 
 function Sidebar() {
+  const [fotoUrl, setFotoUrl] = useState("");
+
+  useEffect(() => {
+    let ativo = true;
+    let urlAtual = "";
+
+    async function carregarFoto() {
+      try {
+        const resposta = await api.get("/usuarios/me/foto", {
+          responseType: "blob",
+        });
+
+        if (!ativo || !resposta.data || resposta.data.size === 0) {
+          return;
+        }
+
+        const novaUrl = URL.createObjectURL(resposta.data);
+
+        if (urlAtual) {
+          URL.revokeObjectURL(urlAtual);
+        }
+
+        urlAtual = novaUrl;
+        setFotoUrl(novaUrl);
+      } catch {
+        if (ativo) {
+          setFotoUrl("");
+        }
+      }
+    }
+
+    function atualizarFoto() {
+      carregarFoto();
+    }
+
+    carregarFoto();
+
+    window.addEventListener("stockflow:foto-atualizada", atualizarFoto);
+
+    return () => {
+      ativo = false;
+
+      window.removeEventListener("stockflow:foto-atualizada", atualizarFoto);
+
+      if (urlAtual) {
+        URL.revokeObjectURL(urlAtual);
+      }
+    };
+  }, []);
+
   return (
     <aside className="flex h-full w-[76px] shrink-0 flex-col items-center overflow-hidden border-r border-white/[0.06] bg-[#19191D]">
       <NavLink
@@ -86,14 +139,22 @@ function Sidebar() {
           title="Meu perfil"
           aria-label="Abrir meu perfil"
           className={({ isActive }) =>
-            `flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition ${
+            `flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-xs font-semibold transition ${
               isActive
                 ? "border-[#A9BFFF] bg-[#A9BFFF]/20 text-[#A9BFFF]"
                 : "border-[#A9BFFF]/30 bg-[#A9BFFF]/10 text-[#A9BFFF] hover:border-[#A9BFFF] hover:bg-[#A9BFFF]/20"
             }`
           }
         >
-          SF
+          {fotoUrl ? (
+            <img
+              src={fotoUrl}
+              alt="Foto do perfil"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            "SF"
+          )}
         </NavLink>
       </div>
     </aside>

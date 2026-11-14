@@ -234,6 +234,8 @@ export default function Usuarios() {
       await api.put("/usuarios/me/foto", dados);
 
       setArquivoFoto(null);
+      window.dispatchEvent(new Event("stockflow:foto-atualizada"));
+
       setSucesso("Foto de perfil atualizada com sucesso.");
     } catch (error) {
       setErro(obterMensagemErro(error, "Não foi possível atualizar sua foto."));
@@ -257,6 +259,8 @@ export default function Usuarios() {
 
       setFotoUrl("");
       setArquivoFoto(null);
+
+      window.dispatchEvent(new Event("stockflow:foto-atualizada"));
 
       setSucesso("Foto de perfil removida com sucesso.");
     } catch (error) {

@@ -170,7 +170,11 @@ export default function Auditoria() {
     [registros],
   );
 
-  const hoje = new Date();
+  const hoje = useMemo(() => {
+    const data = new Date();
+    data.setHours(0, 0, 0, 0);
+    return data.getTime();
+  }, []);
 
   const registrosHoje = useMemo(
     () =>
@@ -179,13 +183,14 @@ export default function Auditoria() {
 
         const data = new Date(registro.dataHora);
 
-        return (
-          data.getDate() === hoje.getDate() &&
-          data.getMonth() === hoje.getMonth() &&
-          data.getFullYear() === hoje.getFullYear()
-        );
+        if (Number.isNaN(data.getTime())) return false;
+
+        const inicioDoRegistro = new Date(data);
+        inicioDoRegistro.setHours(0, 0, 0, 0);
+
+        return inicioDoRegistro.getTime() === hoje;
       }).length,
-    [registros, hoje.getDate(), hoje.getMonth(), hoje.getFullYear()],
+    [registros, hoje],
   );
 
   const ultimaAtividade = registros[0]

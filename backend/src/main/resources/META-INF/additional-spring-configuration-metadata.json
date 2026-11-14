@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "security.jwt.secret",
+      "type": "java.lang.String",
+      "description": "Chave secreta utilizada para assinatura dos tokens JWT."
+    },
+    {
+      "name": "security.jwt.expiration-ms",
+      "type": "java.lang.Long",
+      "description": "Tempo de validade dos tokens JWT em milissegundos."
+    }
+  ]
+}
