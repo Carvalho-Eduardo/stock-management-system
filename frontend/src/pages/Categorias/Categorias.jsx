@@ -37,31 +37,17 @@ function mensagemErro(erro, acao = "realizar esta operação") {
   const status = erro?.response?.status;
   const mensagem = erro?.response?.data?.message;
 
-  if (status === 400) {
-    return mensagem || "Verifique os dados informados.";
-  }
-
-  if (status === 401) {
-    return "Sua sessão expirou. Faça login novamente.";
-  }
-
-  if (status === 403) {
+  if (status === 400) return mensagem || "Verifique os dados informados.";
+  if (status === 401) return "Sua sessão expirou. Faça login novamente.";
+  if (status === 403)
     return "Você não possui permissão para executar esta ação.";
-  }
-
-  if (status === 404) {
-    return "Categoria não encontrada.";
-  }
-
+  if (status === 404) return "Categoria não encontrada.";
   if (status === 409) {
     return (
       mensagem || "Não foi possível concluir a operação devido a um conflito."
     );
   }
-
-  if (!erro?.response) {
-    return "Não foi possível conectar ao servidor.";
-  }
+  if (!erro?.response) return "Não foi possível conectar ao servidor.";
 
   return mensagem || `Não foi possível ${acao}.`;
 }
@@ -87,11 +73,9 @@ function Indicador({ titulo, valor, detalhe, icone: Icone, cor }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm text-[#A1A1AA]">{titulo}</p>
-
           <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
             {valor}
           </p>
-
           <p className="mt-2 text-xs text-[#71717A]">{detalhe}</p>
         </div>
 
@@ -191,9 +175,7 @@ function ModalCategoria({ aberto, categoria, salvar, fechar, salvando }) {
       descricao: descricaoNormalizada || null,
     });
 
-    if (!sucesso) {
-      return;
-    }
+    if (!sucesso) return;
   }
 
   return (
@@ -209,7 +191,6 @@ function ModalCategoria({ aberto, categoria, salvar, fechar, salvando }) {
             <h2 className="text-lg font-semibold text-white">
               {editando ? "Editar categoria" : "Nova categoria"}
             </h2>
-
             <p className="mt-1 text-sm text-[#A1A1AA]">
               {editando
                 ? "Atualize as informações da categoria."
@@ -322,67 +303,56 @@ function ModalCategoria({ aberto, categoria, salvar, fechar, salvando }) {
 // MODAL DE EXCLUSÃO
 // ======================================================
 
-function ModalExclusao({
-  categoria,
-  fechar,
-  confirmar,
-  excluindo,
-  quantidadeProdutos,
-}) {
+function ModalExclusao({ categoria, fechar, confirmar, excluindo }) {
   if (!categoria) return null;
 
-  const possuiProdutos = quantidadeProdutos > 0;
+  const possuiProdutos = categoria.quantidadeProdutos > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#19191D] p-6 shadow-2xl">
-        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
-          {possuiProdutos ? <AlertTriangle size={23} /> : <Trash2 size={23} />}
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm">
+      <div className="my-auto w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#19191D] p-6 shadow-2xl">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+          <AlertTriangle size={23} />
         </div>
 
-        <h2 className="text-lg font-semibold text-white">
-          {possuiProdutos ? "Categoria vinculada" : "Excluir categoria"}
+        <h2 className="mt-5 text-lg font-semibold text-white">
+          Excluir categoria
         </h2>
 
-        {possuiProdutos ? (
-          <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">
-            A categoria <strong className="text-white">{categoria.nome}</strong>{" "}
-            possui {quantidadeProdutos}{" "}
-            {quantidadeProdutos === 1
-              ? "produto vinculado"
-              : "produtos vinculados"}
-            . Não é possível excluí-la enquanto existirem produtos associados.
-          </p>
-        ) : (
-          <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">
-            Tem certeza de que deseja excluir a categoria{" "}
-            <strong className="text-white">{categoria.nome}</strong>? Essa ação
-            não poderá ser desfeita.
-          </p>
+        <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">
+          Tem certeza de que deseja excluir a categoria{" "}
+          <span className="font-medium text-white">{categoria.nome}</span>? Esta
+          ação não poderá ser desfeita.
+        </p>
+
+        {possuiProdutos && (
+          <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-3">
+            <p className="text-sm text-amber-300">
+              Esta categoria possui {categoria.quantidadeProdutos} produto(s)
+              vinculado(s). Remova ou altere os vínculos antes de excluir.
+            </p>
+          </div>
         )}
 
-        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={fechar}
             disabled={excluindo}
             className="rounded-xl border border-white/[0.09] px-5 py-3 text-sm font-medium text-[#D4D4D8] transition hover:bg-white/[0.05]"
           >
-            {possuiProdutos ? "Entendi" : "Cancelar"}
+            Cancelar
           </button>
 
-          {!possuiProdutos && (
-            <button
-              type="button"
-              onClick={confirmar}
-              disabled={excluindo}
-              className="flex items-center justify-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600 disabled:opacity-60"
-            >
-              {excluindo && <LoaderCircle size={17} className="animate-spin" />}
-
-              {excluindo ? "Excluindo..." : "Excluir categoria"}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={confirmar}
+            disabled={excluindo || possuiProdutos}
+            className="flex items-center justify-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {excluindo && <LoaderCircle size={17} className="animate-spin" />}
+            Excluir categoria
+          </button>
         </div>
       </div>
     </div>
@@ -390,33 +360,21 @@ function ModalExclusao({
 }
 
 // ======================================================
-// PÁGINA PRINCIPAL
+// PÁGINA DE CATEGORIAS
 // ======================================================
 
 function Categorias() {
   const [categorias, setCategorias] = useState([]);
   const [produtos, setProdutos] = useState([]);
-
-  const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [erroCarregamento, setErroCarregamento] = useState("");
-
+  const [busca, setBusca] = useState("");
   const [modalAberto, setModalAberto] = useState(false);
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
-
+  const [categoriaEdicao, setCategoriaEdicao] = useState(null);
   const [categoriaExclusao, setCategoriaExclusao] = useState(null);
-  const [excluindo, setExcluindo] = useState(false);
   const [salvando, setSalvando] = useState(false);
-
+  const [excluindo, setExcluindo] = useState(false);
   const [notificacao, setNotificacao] = useState(null);
-
-  function notificar(mensagem, tipo = "sucesso") {
-    setNotificacao({ mensagem, tipo });
-  }
-
-  // ------------------------------------------------------
-  // CARREGAMENTO DOS DADOS
-  // ------------------------------------------------------
 
   async function carregarDados() {
     setCarregando(true);
@@ -428,8 +386,17 @@ function Categorias() {
         api.get("/produtos"),
       ]);
 
-      setCategorias(obterLista(respostaCategorias));
-      setProdutos(obterLista(respostaProdutos));
+      const listaCategorias = obterLista(respostaCategorias);
+      const listaProdutos = obterLista(respostaProdutos);
+
+      setProdutos(listaProdutos);
+
+      setCategorias(
+        listaCategorias.map((categoria) => ({
+          ...categoria,
+          quantidadeProdutos: contarProdutos(listaProdutos, categoria.id),
+        })),
+      );
     } catch (erro) {
       setErroCarregamento(mensagemErro(erro, "carregar as categorias"));
     } finally {
@@ -441,168 +408,135 @@ function Categorias() {
     carregarDados();
   }, []);
 
-  // ------------------------------------------------------
-  // INDICADORES E BUSCA
-  // ------------------------------------------------------
-
-  const categoriasComQuantidade = useMemo(() => {
-    return categorias.map((categoria) => ({
-      ...categoria,
-      quantidadeProdutos: contarProdutos(produtos, categoria.id),
-    }));
-  }, [categorias, produtos]);
-
   const categoriasFiltradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
-    if (!termo) return categoriasComQuantidade;
+    if (!termo) return categorias;
 
-    return categoriasComQuantidade.filter((categoria) => {
+    return categorias.filter((categoria) => {
       return (
-        categoria.nome?.toLowerCase().includes(termo) ||
-        categoria.descricao?.toLowerCase().includes(termo)
+        String(categoria.nome || "")
+          .toLowerCase()
+          .includes(termo) ||
+        String(categoria.descricao || "")
+          .toLowerCase()
+          .includes(termo)
       );
     });
-  }, [categoriasComQuantidade, busca]);
+  }, [categorias, busca]);
 
-  const totalCategorias = categorias.length;
-
-  const categoriasComProdutos = categoriasComQuantidade.filter(
+  const totalProdutos = produtos.length;
+  const categoriasEmUso = categorias.filter(
     (categoria) => categoria.quantidadeProdutos > 0,
   ).length;
+  const categoriasSemProdutos = categorias.length - categoriasEmUso;
 
-  const categoriasSemProdutos = totalCategorias - categoriasComProdutos;
-
-  // ------------------------------------------------------
-  // ABRIR MODAIS
-  // ------------------------------------------------------
+  function exibirNotificacao(tipo, mensagem) {
+    setNotificacao({ tipo, mensagem });
+  }
 
   function abrirCadastro() {
-    setCategoriaSelecionada(null);
+    setCategoriaEdicao(null);
     setModalAberto(true);
   }
 
   function abrirEdicao(categoria) {
-    setCategoriaSelecionada(categoria);
+    setCategoriaEdicao(categoria);
     setModalAberto(true);
   }
 
   function fecharModal() {
     if (salvando) return;
-
     setModalAberto(false);
-    setCategoriaSelecionada(null);
+    setCategoriaEdicao(null);
   }
-
-  // ------------------------------------------------------
-  // CADASTRAR E EDITAR
-  // ------------------------------------------------------
 
   async function salvarCategoria(dados) {
     setSalvando(true);
 
     try {
-      if (categoriaSelecionada) {
-        await api.put(`/categorias/${categoriaSelecionada.id}`, dados);
-
-        notificar("Categoria atualizada com sucesso!");
+      if (categoriaEdicao) {
+        await api.put(`/categorias/${categoriaEdicao.id}`, dados);
+        exibirNotificacao("sucesso", "Categoria atualizada com sucesso.");
       } else {
         await api.post("/categorias", dados);
-
-        notificar("Categoria cadastrada com sucesso!");
+        exibirNotificacao("sucesso", "Categoria cadastrada com sucesso.");
       }
 
       setModalAberto(false);
-      setCategoriaSelecionada(null);
-
+      setCategoriaEdicao(null);
       await carregarDados();
 
       return true;
     } catch (erro) {
-      notificar(mensagemErro(erro, "salvar a categoria"), "erro");
+      exibirNotificacao(
+        "erro",
+        mensagemErro(
+          erro,
+          categoriaEdicao ? "atualizar a categoria" : "cadastrar a categoria",
+        ),
+      );
       return false;
     } finally {
       setSalvando(false);
     }
   }
 
-  // ------------------------------------------------------
-  // EXCLUIR CATEGORIA
-  // ------------------------------------------------------
+  async function confirmarExclusao() {
+    if (!categoriaExclusao || excluindo) return;
 
-  async function excluirCategoria() {
-    if (!categoriaExclusao) return;
+    if (categoriaExclusao.quantidadeProdutos > 0) {
+      exibirNotificacao(
+        "erro",
+        "Não é possível excluir uma categoria que possui produtos vinculados.",
+      );
+      return;
+    }
 
     setExcluindo(true);
 
     try {
       await api.delete(`/categorias/${categoriaExclusao.id}`);
-
       setCategoriaExclusao(null);
-
-      notificar("Categoria excluída com sucesso!");
-
+      exibirNotificacao("sucesso", "Categoria excluída com sucesso.");
       await carregarDados();
     } catch (erro) {
-      notificar(mensagemErro(erro, "excluir a categoria"), "erro");
+      exibirNotificacao("erro", mensagemErro(erro, "excluir a categoria"));
     } finally {
       setExcluindo(false);
     }
   }
 
-  // ------------------------------------------------------
-  // RENDERIZAÇÃO
-  // ------------------------------------------------------
-
   return (
-    <div className="space-y-7 pb-8">
+    <div className="min-w-0 space-y-6 pb-8">
       <Notificacao
         notificacao={notificacao}
         fechar={() => setNotificacao(null)}
       />
 
-      <ModalCategoria
-        aberto={modalAberto}
-        categoria={categoriaSelecionada}
-        salvar={salvarCategoria}
-        fechar={fecharModal}
-        salvando={salvando}
-      />
-
-      <ModalExclusao
-        categoria={categoriaExclusao}
-        fechar={() => {
-          if (!excluindo) setCategoriaExclusao(null);
-        }}
-        confirmar={excluirCategoria}
-        excluindo={excluindo}
-        quantidadeProdutos={
-          categoriaExclusao ? contarProdutos(produtos, categoriaExclusao.id) : 0
-        }
-      />
-
       {/* CABEÇALHO */}
 
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#A9BFFF]">
-            <Layers3 size={15} />
-            <span>GERENCIAMENTO</span>
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#A9BFFF]/10 text-[#A9BFFF]">
+              <Layers3 size={20} />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-white sm:text-2xl">
+                Categorias
+              </h1>
+              <p className="mt-0.5 text-sm text-[#71717A]">
+                Organize os produtos do seu estoque
+              </p>
+            </div>
           </div>
-
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
-            Categorias
-          </h1>
-
-          <p className="mt-2 text-sm text-[#A1A1AA]">
-            Organize e gerencie as categorias dos seus produtos.
-          </p>
         </div>
 
         <button
           type="button"
           onClick={abrirCadastro}
-          className="flex items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-5 py-3 text-sm font-semibold text-[#101827] transition hover:bg-[#C1D0FF]"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-4 py-3 text-sm font-semibold text-[#101827] transition hover:bg-[#C1D0FF] sm:w-auto"
         >
           <CirclePlus size={18} />
           Nova categoria
@@ -614,24 +548,24 @@ function Categorias() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Indicador
           titulo="Total de categorias"
-          valor={totalCategorias}
+          valor={categorias.length}
           detalhe="Categorias cadastradas"
           icone={Tag}
           cor="bg-[#A9BFFF]/10 text-[#A9BFFF]"
         />
 
         <Indicador
-          titulo="Com produtos"
-          valor={categoriasComProdutos}
-          detalhe="Categorias em utilização"
+          titulo="Em utilização"
+          valor={categoriasEmUso}
+          detalhe="Com produtos vinculados"
           icone={Boxes}
-          cor="bg-[#A6DDE5]/10 text-[#A6DDE5]"
+          cor="bg-emerald-500/10 text-emerald-400"
         />
 
         <Indicador
           titulo="Sem produtos"
           valor={categoriasSemProdutos}
-          detalhe="Disponíveis para utilização"
+          detalhe={`${totalProdutos} produtos no estoque`}
           icone={FolderOpen}
           cor="bg-[#D7CDA6]/10 text-[#D7CDA6]"
         />
@@ -642,10 +576,9 @@ function Categorias() {
       <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#19191D]">
         <div className="flex flex-col gap-4 border-b border-white/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-semibold text-white">Categorias cadastradas</h2>
-
-            <p className="mt-1 text-xs text-[#71717A]">
-              Consulte, edite e gerencie suas categorias.
+            <h2 className="font-semibold text-white">Todas as categorias</h2>
+            <p className="mt-1 text-sm text-[#71717A]">
+              Gerencie as categorias cadastradas
             </p>
           </div>
 
@@ -654,9 +587,8 @@ function Categorias() {
               size={17}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[#71717A]"
             />
-
             <input
-              type="text"
+              type="search"
               value={busca}
               onChange={(event) => setBusca(event.target.value)}
               placeholder="Buscar categoria..."
@@ -667,21 +599,19 @@ function Categorias() {
 
         {carregando ? (
           <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
-            <LoaderCircle size={30} className="animate-spin text-[#A9BFFF]" />
-
+            <LoaderCircle size={28} className="animate-spin text-[#A9BFFF]" />
             <p className="text-sm text-[#A1A1AA]">Carregando categorias...</p>
           </div>
         ) : erroCarregamento ? (
           <div className="flex min-h-[280px] flex-col items-center justify-center px-5 text-center">
-            <AlertCircle size={32} className="text-red-400" />
-
+            <AlertCircle size={28} className="text-red-400" />
             <p className="mt-3 text-sm text-red-300">{erroCarregamento}</p>
-
             <button
               type="button"
               onClick={carregarDados}
-              className="mt-4 rounded-lg border border-white/[0.1] px-4 py-2 text-sm text-white transition hover:bg-white/[0.05]"
+              className="mt-4 flex items-center gap-2 rounded-xl border border-white/[0.1] px-4 py-2.5 text-sm text-white transition hover:bg-white/[0.05]"
             >
+              <RefreshCw size={16} />
               Tentar novamente
             </button>
           </div>
@@ -749,7 +679,6 @@ function Categorias() {
                               <p className="text-sm font-medium text-white">
                                 {categoria.nome}
                               </p>
-
                               <p className="mt-1 text-xs text-[#71717A]">
                                 ID #{categoria.id}
                               </p>
@@ -785,7 +714,6 @@ function Categorias() {
                                   : "bg-[#D7CDA6]"
                               }`}
                             />
-
                             {possuiProdutos ? "Em utilização" : "Sem produtos"}
                           </span>
                         </td>
@@ -840,7 +768,6 @@ function Categorias() {
                           <p className="truncate text-sm font-medium text-white">
                             {categoria.nome}
                           </p>
-
                           <p className="mt-1 text-xs text-[#71717A]">
                             ID #{categoria.id}
                           </p>
@@ -911,6 +838,25 @@ function Categorias() {
           </>
         )}
       </div>
+
+      {/* MODAIS */}
+
+      <ModalCategoria
+        aberto={modalAberto}
+        categoria={categoriaEdicao}
+        salvar={salvarCategoria}
+        fechar={fecharModal}
+        salvando={salvando}
+      />
+
+      <ModalExclusao
+        categoria={categoriaExclusao}
+        fechar={() => {
+          if (!excluindo) setCategoriaExclusao(null);
+        }}
+        confirmar={confirmarExclusao}
+        excluindo={excluindo}
+      />
     </div>
   );
 }

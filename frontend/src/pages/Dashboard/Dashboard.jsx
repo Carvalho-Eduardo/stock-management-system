@@ -26,19 +26,23 @@ function CartaoIndicador({ titulo, valor, detalhe, Icone, cor }) {
   void Icone;
 
   return (
-    <article className="rounded-2xl border border-white/[0.08] bg-[#19191D] p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-[#A1A1AA]">{titulo}</p>
-          <p className="mt-3 text-3xl font-semibold text-[#F4F4F5]">{valor}</p>
-          <p className="mt-2 text-xs text-[#71717A]">{detalhe}</p>
+    <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-[#19191D] p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-[#A1A1AA] sm:text-sm">{titulo}</p>
+          <p className="mt-2 break-words text-2xl font-semibold text-[#F4F4F5] sm:mt-3 sm:text-3xl">
+            {valor}
+          </p>
+          <p className="mt-2 text-[11px] text-[#71717A] sm:text-xs">
+            {detalhe}
+          </p>
         </div>
 
         <span
-          className="rounded-xl p-3"
+          className="shrink-0 rounded-xl p-2.5 sm:p-3"
           style={{ color: cor, backgroundColor: `${cor}18` }}
         >
-          <Icone size={21} />
+          <Icone size={20} />
         </span>
       </div>
     </article>
@@ -83,9 +87,12 @@ export default function Dashboard() {
 
   if (erro) {
     return (
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-6 text-sm text-red-300">
-        {erro}
-        <button onClick={carregar} className="ml-4 underline">
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-4 text-sm text-red-300 sm:p-6">
+        <p>{erro}</p>
+        <button
+          onClick={carregar}
+          className="mt-4 rounded-lg border border-red-400/20 px-4 py-2 underline"
+        >
           Tentar novamente
         </button>
       </div>
@@ -124,94 +131,104 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-7 pb-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#A9BFFF]">
+    <div className="min-w-0 space-y-5 pb-6 sm:space-y-7 sm:pb-10">
+      <div className="flex min-w-0 flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#A9BFFF] sm:text-xs">
             Painel de controle
           </p>
-          <h1 className="mt-2 text-2xl font-semibold text-[#F4F4F5]">
+
+          <h1 className="mt-2 text-xl font-semibold text-[#F4F4F5] sm:text-2xl">
             Visão geral do estoque
           </h1>
-          <p className="mt-1 text-sm text-[#A1A1AA]">
+
+          <p className="mt-1 text-xs leading-relaxed text-[#A1A1AA] sm:text-sm">
             Indicadores atualizados com os dados do sistema.
           </p>
         </div>
 
         <button
           onClick={carregar}
-          className="flex items-center gap-2 rounded-xl border border-white/[0.09] px-4 py-2.5 text-sm text-[#D4D4D8] hover:bg-white/[0.05]"
+          className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-white/[0.09] px-4 py-3 text-sm text-[#D4D4D8] transition hover:bg-white/[0.05] sm:w-auto sm:py-2.5"
         >
           <RefreshCw size={16} />
           Atualizar
         </button>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid min-w-0 grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {indicadores.map((item) => (
           <CartaoIndicador key={item.titulo} {...item} />
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
-        <article className="rounded-2xl border border-white/[0.08] bg-[#19191D] p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-[#F4F4F5]">
+      <section className="grid min-w-0 gap-4 xl:grid-cols-2">
+        <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-[#19191D] p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-[#F4F4F5] sm:text-base">
                 Movimentações de estoque
               </h2>
               <p className="mt-1 text-xs text-[#71717A]">Totais registrados</p>
             </div>
+
             <Link
               to="/movimentacoes"
-              className="text-xs text-[#A9BFFF] hover:underline"
+              className="shrink-0 text-[11px] text-[#A9BFFF] hover:underline sm:text-xs"
             >
               Ver histórico
             </Link>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-[#101014] p-4">
-              <div className="flex items-center gap-2 text-emerald-300">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6">
+            <div className="min-w-0 rounded-xl bg-[#101014] p-3 sm:p-4">
+              <div className="flex flex-wrap items-center gap-2 text-emerald-300">
                 <ArrowDownToLine size={17} />
-                <span className="text-sm">Entradas</span>
+                <span className="text-xs sm:text-sm">Entradas</span>
               </div>
-              <p className="mt-3 text-2xl font-semibold text-white">
+
+              <p className="mt-3 text-xl font-semibold text-white sm:text-2xl">
                 {dados?.totalEntradas ?? 0}
               </p>
             </div>
 
-            <div className="rounded-xl bg-[#101014] p-4">
-              <div className="flex items-center gap-2 text-red-300">
+            <div className="min-w-0 rounded-xl bg-[#101014] p-3 sm:p-4">
+              <div className="flex flex-wrap items-center gap-2 text-red-300">
                 <ArrowUpFromLine size={17} />
-                <span className="text-sm">Saídas</span>
+                <span className="text-xs sm:text-sm">Saídas</span>
               </div>
-              <p className="mt-3 text-2xl font-semibold text-white">
+
+              <p className="mt-3 text-xl font-semibold text-white sm:text-2xl">
                 {dados?.totalSaidas ?? 0}
               </p>
             </div>
           </div>
         </article>
 
-        <article className="rounded-2xl border border-white/[0.08] bg-[#19191D] p-5">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="text-amber-300" size={18} />
-            <h2 className="font-semibold text-[#F4F4F5]">
-              Produtos com estoque baixo
-            </h2>
-          </div>
+        <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-[#19191D] p-4 sm:p-5">
+          <div className="flex items-start gap-2">
+            <AlertTriangle
+              className="mt-0.5 shrink-0 text-amber-300"
+              size={18}
+            />
 
-          <p className="mt-1 text-xs text-[#71717A]">
-            {dados?.totalProdutosEstoqueBaixo ?? 0} produto(s) precisam de
-            atenção
-          </p>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-[#F4F4F5] sm:text-base">
+                Produtos com estoque baixo
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#71717A]">
+                {dados?.totalProdutosEstoqueBaixo ?? 0} produto(s) precisam de
+                atenção
+              </p>
+            </div>
+          </div>
 
           <div className="mt-4 space-y-2">
             {(dados?.produtosEstoqueBaixo || []).length ? (
               dados.produtosEstoqueBaixo.slice(0, 5).map((produto) => (
                 <div
                   key={produto.id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-[#101014] px-4 py-3"
+                  className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-[#101014] px-3 py-3 sm:px-4"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm text-[#F4F4F5]">
@@ -222,7 +239,7 @@ export default function Dashboard() {
                     </p>
                   </div>
 
-                  <span className="shrink-0 text-xs text-amber-300">
+                  <span className="shrink-0 text-right text-[10px] text-amber-300 sm:text-xs">
                     {produto.quantidadeEstoque} / mín. {produto.estoqueMinimo}
                   </span>
                 </div>
@@ -236,10 +253,10 @@ export default function Dashboard() {
         </article>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#19191D]">
-        <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
-          <div>
-            <h2 className="font-semibold text-[#F4F4F5]">
+      <section className="min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#19191D]">
+        <div className="flex items-start justify-between gap-3 border-b border-white/[0.07] p-4 sm:items-center sm:p-5">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-[#F4F4F5] sm:text-base">
               Últimas movimentações
             </h2>
             <p className="mt-1 text-xs text-[#71717A]">
@@ -249,7 +266,7 @@ export default function Dashboard() {
 
           <Link
             to="/movimentacoes"
-            className="text-xs text-[#A9BFFF] hover:underline"
+            className="shrink-0 text-[11px] text-[#A9BFFF] hover:underline sm:text-xs"
           >
             Ver todas
           </Link>
@@ -260,11 +277,11 @@ export default function Dashboard() {
             {dados.movimentacoesRecentes.map((mov) => (
               <div
                 key={mov.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                className="flex min-w-0 flex-col gap-3 px-4 py-4 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between sm:px-5"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span
-                    className={`rounded-lg p-2 ${
+                    className={`shrink-0 rounded-lg p-2 ${
                       mov.tipo === "ENTRADA"
                         ? "bg-emerald-400/10 text-emerald-300"
                         : "bg-red-400/10 text-red-300"
@@ -281,19 +298,20 @@ export default function Dashboard() {
                     <p className="truncate text-sm font-medium text-[#F4F4F5]">
                       {mov.produtoNome}
                     </p>
-                    <p className="mt-1 text-xs text-[#71717A]">
+                    <p className="mt-1 break-words text-xs text-[#71717A]">
                       {mov.produtoSku || "Sem SKU"} ·{" "}
                       {mov.usuarioNome || "Usuário não identificado"}
                     </p>
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="flex items-center justify-between gap-3 min-[420px]:shrink-0 min-[420px]:flex-col min-[420px]:items-end min-[420px]:gap-1">
                   <p className="text-sm text-[#F4F4F5]">
                     {mov.tipo === "ENTRADA" ? "+" : "−"}
                     {mov.quantidade}
                   </p>
-                  <p className="mt-1 flex items-center justify-end gap-1 text-xs text-[#71717A]">
+
+                  <p className="flex items-center gap-1 text-xs text-[#71717A]">
                     <Clock3 size={12} />
                     {dataHora(mov.dataHora)}
                   </p>

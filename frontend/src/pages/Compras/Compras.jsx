@@ -69,9 +69,7 @@ export default function Compras() {
       ]);
 
       setCompras(Array.isArray(c.data) ? c.data : c.data?.content || []);
-
       setFornecedores(Array.isArray(f.data) ? f.data : f.data?.content || []);
-
       setProdutos(Array.isArray(p.data) ? p.data : p.data?.content || []);
     } catch (e) {
       setErro(
@@ -238,7 +236,7 @@ export default function Compras() {
 
   return (
     <div className="space-y-6 pb-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#A9BFFF]">
             Estoque / Suprimentos
@@ -253,14 +251,14 @@ export default function Compras() {
 
         <button
           onClick={abrirNova}
-          className="flex items-center gap-2 rounded-xl bg-[#A9BFFF] px-4 py-3 text-sm font-semibold text-[#101D2D] hover:bg-[#BED0FF]"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-4 py-3 text-sm font-semibold text-[#101D2D] hover:bg-[#BED0FF] sm:w-auto"
         >
           <Plus size={17} />
           Nova compra
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
           { t: "Total de compras", v: compras.length },
           {
@@ -274,16 +272,18 @@ export default function Compras() {
         ].map((x) => (
           <div
             key={x.t}
-            className="rounded-2xl border border-white/[0.08] bg-[#19191D] p-5"
+            className="rounded-2xl border border-white/[0.08] bg-[#19191D] p-4 sm:p-5"
           >
             <p className="text-sm text-[#A1A1AA]">{x.t}</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{x.v}</p>
+            <p className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+              {x.v}
+            </p>
           </div>
         ))}
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#19191D]">
-        <div className="flex flex-col gap-3 border-b border-white/[0.07] p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 border-b border-white/[0.07] p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="font-semibold text-[#F4F4F5]">
               Histórico de compras
@@ -293,7 +293,7 @@ export default function Compras() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_160px_44px]">
             <div className="relative">
               <Search
                 size={16}
@@ -303,14 +303,14 @@ export default function Compras() {
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 placeholder="Buscar por fornecedor ou ID"
-                className={`${campo} mt-0 pl-9 sm:w-64`}
+                className={`${campo} mt-0 pl-9`}
               />
             </div>
 
             <select
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
-              className={`${campo} mt-0 sm:w-40`}
+              className={`${campo} mt-0`}
             >
               <option value="TODOS">Todos os status</option>
               <option value="PENDENTE">Pendentes</option>
@@ -320,7 +320,8 @@ export default function Compras() {
 
             <button
               onClick={carregar}
-              className="rounded-xl border border-white/[0.09] px-3 py-2 text-sm text-[#D4D4D8] hover:bg-white/[0.05]"
+              title="Atualizar"
+              className="flex items-center justify-center rounded-xl border border-white/[0.09] px-3 py-3 text-sm text-[#D4D4D8] hover:bg-white/[0.05]"
             >
               <RefreshCw size={17} />
             </button>
@@ -339,102 +340,189 @@ export default function Compras() {
             Nenhuma compra encontrada.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
-              <thead className="bg-[#101014]/70 text-xs uppercase tracking-wider text-[#71717A]">
-                <tr>
-                  {[
-                    "Compra",
-                    "Fornecedor",
-                    "Data",
-                    "Itens",
-                    "Valor total",
-                    "Status",
-                    "Ações",
-                  ].map((t) => (
-                    <th key={t} className="px-5 py-4 font-medium">
-                      {t}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+          <>
+            <div className="grid gap-3 p-3 md:hidden">
+              {filtradas.map((c) => (
+                <article
+                  key={c.id}
+                  className="rounded-xl border border-white/[0.07] bg-[#101014]/70 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#71717A]">Compra</p>
+                      <p className="mt-1 font-semibold text-white">#{c.id}</p>
+                      <p className="mt-1 truncate text-sm text-[#D4D4D8]">
+                        {c.fornecedorNome || "Fornecedor não informado"}
+                      </p>
+                    </div>
 
-              <tbody>
-                {filtradas.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="border-t border-white/[0.05] hover:bg-white/[0.02]"
-                  >
-                    <td className="px-5 py-4 text-sm text-white">#{c.id}</td>
-                    <td className="px-5 py-4 text-sm text-[#D4D4D8]">
-                      {c.fornecedorNome}
-                    </td>
-                    <td className="px-5 py-4 text-xs text-[#A1A1AA]">
-                      {dataBR(c.dataCadastro)}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-[#D4D4D8]">
-                      {c.itens?.length || 0}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-white">
-                      {moeda(c.valorTotal)}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`rounded-full border px-2.5 py-1 text-xs ${
-                          statusClass[c.status] || ""
-                        }`}
-                      >
-                        {statusLabel[c.status] || c.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex gap-2">
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] ${
+                        statusClass[c.status] || ""
+                      }`}
+                    >
+                      {statusLabel[c.status] || c.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-3">
+                    <div>
+                      <p className="text-[11px] text-[#71717A]">Data</p>
+                      <p className="mt-1 text-xs text-[#D4D4D8]">
+                        {dataBR(c.dataCadastro)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] text-[#71717A]">Itens</p>
+                      <p className="mt-1 text-sm text-[#D4D4D8]">
+                        {c.itens?.length || 0}
+                      </p>
+                    </div>
+
+                    <div className="col-span-2">
+                      <p className="text-[11px] text-[#71717A]">Valor total</p>
+                      <p className="mt-1 text-lg font-semibold text-white">
+                        {moeda(c.valorTotal)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-white/[0.06] pt-3">
+                    <button
+                      title="Detalhes"
+                      onClick={() => abrirDetalhe(c)}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/10 p-2 text-xs text-[#A9BFFF]"
+                    >
+                      <Eye size={15} />
+                      Detalhes
+                    </button>
+
+                    {c.status === "PENDENTE" && (
+                      <>
                         <button
-                          title="Detalhes"
-                          onClick={() => abrirDetalhe(c)}
-                          className="rounded-lg border border-white/10 p-2 text-[#A9BFFF] hover:bg-white/5"
+                          title="Receber compra"
+                          disabled={acaoId === c.id}
+                          onClick={() => executar(c.id, "receber")}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-emerald-400/20 p-2 text-xs text-emerald-300 disabled:opacity-40"
                         >
-                          <Eye size={15} />
+                          <Check size={15} />
+                          Receber
                         </button>
 
-                        {c.status === "PENDENTE" && (
-                          <>
-                            <button
-                              title="Receber compra"
-                              disabled={acaoId === c.id}
-                              onClick={() => executar(c.id, "receber")}
-                              className="rounded-lg border border-emerald-400/20 p-2 text-emerald-300 hover:bg-emerald-400/10"
-                            >
-                              <Check size={15} />
-                            </button>
+                        <button
+                          title="Cancelar compra"
+                          disabled={acaoId === c.id}
+                          onClick={() => executar(c.id, "cancelar")}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-400/20 p-2 text-xs text-red-300 disabled:opacity-40"
+                        >
+                          <X size={15} />
+                          Cancelar
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
 
-                            <button
-                              title="Cancelar compra"
-                              disabled={acaoId === c.id}
-                              onClick={() => executar(c.id, "cancelar")}
-                              className="rounded-lg border border-red-400/20 p-2 text-red-300 hover:bg-red-400/10"
-                            >
-                              <X size={15} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[720px] text-left">
+                <thead className="bg-[#101014]/70 text-xs uppercase tracking-wider text-[#71717A]">
+                  <tr>
+                    {[
+                      "Compra",
+                      "Fornecedor",
+                      "Data",
+                      "Itens",
+                      "Valor total",
+                      "Status",
+                      "Ações",
+                    ].map((t) => (
+                      <th key={t} className="px-5 py-4 font-medium">
+                        {t}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {filtradas.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="border-t border-white/[0.05] hover:bg-white/[0.02]"
+                    >
+                      <td className="px-5 py-4 text-sm text-white">#{c.id}</td>
+                      <td className="px-5 py-4 text-sm text-[#D4D4D8]">
+                        {c.fornecedorNome}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-[#A1A1AA]">
+                        {dataBR(c.dataCadastro)}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-[#D4D4D8]">
+                        {c.itens?.length || 0}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-white">
+                        {moeda(c.valorTotal)}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-xs ${
+                            statusClass[c.status] || ""
+                          }`}
+                        >
+                          {statusLabel[c.status] || c.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            title="Detalhes"
+                            onClick={() => abrirDetalhe(c)}
+                            className="rounded-lg border border-white/10 p-2 text-[#A9BFFF] hover:bg-white/5"
+                          >
+                            <Eye size={15} />
+                          </button>
+
+                          {c.status === "PENDENTE" && (
+                            <>
+                              <button
+                                title="Receber compra"
+                                disabled={acaoId === c.id}
+                                onClick={() => executar(c.id, "receber")}
+                                className="rounded-lg border border-emerald-400/20 p-2 text-emerald-300 hover:bg-emerald-400/10"
+                              >
+                                <Check size={15} />
+                              </button>
+
+                              <button
+                                title="Cancelar compra"
+                                disabled={acaoId === c.id}
+                                onClick={() => executar(c.id, "cancelar")}
+                                className="rounded-lg border border-red-400/20 p-2 text-red-300 hover:bg-red-400/10"
+                              >
+                                <X size={15} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-sm sm:p-4">
           <form
             onSubmit={salvar}
-            className="my-auto max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/10 bg-[#19191D] shadow-2xl"
+            className="my-auto max-h-[94dvh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/10 bg-[#19191D] shadow-2xl"
           >
-            <div className="sticky top-0 flex items-center justify-between border-b border-white/[0.07] bg-[#19191D] px-6 py-5">
+            <div className="sticky top-0 flex items-center justify-between border-b border-white/[0.07] bg-[#19191D] px-4 py-4 sm:px-6 sm:py-5">
               <div>
                 <h2 className="font-semibold text-white">Nova compra</h2>
                 <p className="mt-1 text-xs text-[#A1A1AA]">
@@ -451,7 +539,7 @@ export default function Compras() {
               </button>
             </div>
 
-            <div className="space-y-5 p-6">
+            <div className="space-y-5 p-4 sm:p-6">
               <div>
                 <label className="text-sm text-[#D4D4D8]">Fornecedor *</label>
                 <select
@@ -472,7 +560,7 @@ export default function Compras() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-medium text-white">
                     Produtos da compra
                   </h3>
@@ -491,7 +579,7 @@ export default function Compras() {
                     key={index}
                     className="grid gap-3 rounded-xl border border-white/[0.07] bg-[#101014]/60 p-4 sm:grid-cols-[1fr_100px_130px_36px]"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <label className="text-xs text-[#A1A1AA]">
                         Produto *
                       </label>
@@ -549,7 +637,8 @@ export default function Compras() {
                       type="button"
                       disabled={form.itens.length === 1}
                       onClick={() => removerItem(index)}
-                      className="mt-6 rounded-lg p-2 text-red-300 hover:bg-red-400/10 disabled:opacity-30"
+                      className="mt-6 flex items-center justify-center rounded-lg p-2 text-red-300 hover:bg-red-400/10 disabled:opacity-30"
+                      aria-label="Remover produto"
                     >
                       <Trash2 size={17} />
                     </button>
@@ -571,7 +660,7 @@ export default function Compras() {
                 />
               </div>
 
-              <div className="flex justify-between rounded-xl bg-[#101014] p-4">
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-[#101014] p-4">
                 <span className="text-sm text-[#A1A1AA]">Total estimado</span>
                 <strong className="text-lg text-white">
                   {moeda(totalPrevisto)}
@@ -585,7 +674,7 @@ export default function Compras() {
               )}
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-white/[0.07] px-6 py-5">
+            <div className="flex flex-col-reverse gap-3 border-t border-white/[0.07] px-4 py-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
               <button
                 type="button"
                 onClick={() => setModal(false)}
@@ -596,7 +685,7 @@ export default function Compras() {
 
               <button
                 disabled={salvando}
-                className="flex items-center gap-2 rounded-xl bg-[#A9BFFF] px-5 py-2.5 text-sm font-semibold text-[#101D2D] disabled:opacity-60"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-5 py-2.5 text-sm font-semibold text-[#101D2D] disabled:opacity-60"
               >
                 {salvando && (
                   <LoaderCircle size={16} className="animate-spin" />
@@ -609,34 +698,36 @@ export default function Compras() {
       )}
 
       {detalhe && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[#19191D] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
-              <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-sm sm:p-4">
+          <div className="my-auto max-h-[92dvh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-[#19191D] shadow-2xl">
+            <div className="sticky top-0 flex items-center justify-between border-b border-white/[0.07] bg-[#19191D] p-4 sm:p-5">
+              <div className="min-w-0">
                 <h2 className="font-semibold text-white">
                   Compra #{detalhe.id}
                 </h2>
-                <p className="mt-1 text-xs text-[#A1A1AA]">
+                <p className="mt-1 truncate text-xs text-[#A1A1AA]">
                   {detalhe.fornecedorNome}
                 </p>
               </div>
 
               <button
                 onClick={() => setDetalhe(null)}
-                className="text-[#A1A1AA] hover:text-white"
+                className="ml-3 shrink-0 text-[#A1A1AA] hover:text-white"
               >
                 <X />
               </button>
             </div>
 
-            <div className="space-y-3 p-5">
+            <div className="space-y-3 p-4 sm:p-5">
               {(detalhe.itens || []).map((i) => (
                 <div
                   key={i.id || i.produtoId}
-                  className="flex justify-between gap-3 rounded-xl bg-[#101014] p-3"
+                  className="flex flex-col justify-between gap-2 rounded-xl bg-[#101014] p-3 sm:flex-row sm:items-center"
                 >
-                  <div>
-                    <p className="text-sm text-white">{i.produtoNome}</p>
+                  <div className="min-w-0">
+                    <p className="break-words text-sm text-white">
+                      {i.produtoNome}
+                    </p>
                     <p className="mt-1 text-xs text-[#71717A]">
                       {i.quantidade} × {moeda(i.precoUnitario)}
                     </p>
@@ -660,7 +751,9 @@ export default function Compras() {
               </p>
 
               {detalhe.observacao && (
-                <p className="text-sm text-[#A1A1AA]">{detalhe.observacao}</p>
+                <p className="break-words text-sm text-[#A1A1AA]">
+                  {detalhe.observacao}
+                </p>
               )}
             </div>
           </div>

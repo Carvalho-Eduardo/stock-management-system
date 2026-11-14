@@ -17,7 +17,7 @@ import {
 import api from "../../services/api";
 
 const campo =
-  "mt-2 w-full rounded-xl border border-white/[0.09] bg-[#101014] px-4 py-3 text-sm text-[#F4F4F5] outline-none transition placeholder:text-[#52525B] focus:border-[#A9BFFF]/60 disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 w-full min-w-0 rounded-xl border border-white/[0.09] bg-[#101014] px-4 py-3 text-sm text-[#F4F4F5] outline-none transition placeholder:text-[#52525B] focus:border-[#A9BFFF]/60 disabled:cursor-not-allowed disabled:opacity-60";
 
 function obterMensagemErro(error, mensagemPadrao) {
   return (
@@ -124,7 +124,9 @@ export default function Usuarios() {
     if (!fotoUrl) return undefined;
 
     return () => {
-      URL.revokeObjectURL(fotoUrl);
+      if (fotoUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(fotoUrl);
+      }
     };
   }, [fotoUrl]);
 
@@ -229,26 +231,25 @@ export default function Usuarios() {
       const dados = new FormData();
       dados.append("arquivo", arquivoFoto);
 
-      await api.put("/usuarios/me/foto", dados);
-
-      setArquivoFoto(null);
-
-      const resposta = await api.get("/usuarios/me/foto", {
-        responseType: "blob",
+      await api.post("/usuarios/me/foto", dados, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      setFotoUrl(URL.createObjectURL(resposta.data));
-
-      setSucesso("Sua foto de perfil foi atualizada.");
+      setArquivoFoto(null);
+      setSucesso("Foto de perfil atualizada com sucesso.");
     } catch (error) {
-      setErro(obterMensagemErro(error, "Não foi possível salvar sua foto."));
+      setErro(obterMensagemErro(error, "Não foi possível atualizar sua foto."));
     } finally {
       setSalvandoFoto(false);
     }
   }
 
   async function removerFoto() {
-    if (!fotoUrl) return;
+    if (!window.confirm("Deseja realmente remover sua foto de perfil?")) {
+      return;
+    }
 
     setErro("");
     setSucesso("");
@@ -261,21 +262,12 @@ export default function Usuarios() {
       setFotoUrl("");
       setArquivoFoto(null);
 
-      setSucesso("Sua foto de perfil foi removida.");
+      setSucesso("Foto de perfil removida com sucesso.");
     } catch (error) {
       setErro(obterMensagemErro(error, "Não foi possível remover sua foto."));
     } finally {
       setSalvandoFoto(false);
     }
-  }
-
-  function atualizarSenha(event) {
-    const { name, value } = event.target;
-
-    setSenha((anterior) => ({
-      ...anterior,
-      [name]: value,
-    }));
   }
 
   async function salvarSenha(event) {
@@ -284,18 +276,18 @@ export default function Usuarios() {
     setErro("");
     setSucesso("");
 
+    if (!senha.atual || !senha.nova || !senha.confirmar) {
+      setErro("Preencha todos os campos de senha.");
+      return;
+    }
+
     if (senha.nova.length < 8) {
-      setErro("A nova senha deve ter pelo menos 8 caracteres.");
+      setErro("A nova senha deve possuir pelo menos 8 caracteres.");
       return;
     }
 
     if (senha.nova !== senha.confirmar) {
       setErro("A confirmação da nova senha não corresponde.");
-      return;
-    }
-
-    if (senha.atual === senha.nova) {
-      setErro("A nova senha deve ser diferente da senha atual.");
       return;
     }
 
@@ -313,7 +305,7 @@ export default function Usuarios() {
         confirmar: "",
       });
 
-      setSucesso("Sua senha foi alterada com sucesso.");
+      setSucesso("Senha alterada com sucesso.");
     } catch (error) {
       setErro(obterMensagemErro(error, "Não foi possível alterar sua senha."));
     } finally {
@@ -323,36 +315,34 @@ export default function Usuarios() {
 
   if (carregando) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-[#A1A1AA]">
-        <LoaderCircle size={20} className="animate-spin" />
+      <div className="flex min-h-[50vh] items-center justify-center text-sm text-[#A1A1AA]">
+        <LoaderCircle size={19} className="mr-2 animate-spin" />
         Carregando seu perfil...
       </div>
     );
   }
 
-  if (!usuario) {
+  if (!usuario && erro) {
     return (
-      <div className="space-y-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#A9BFFF]">
-            Conta
-          </p>
-
-          <h1 className="mt-2 text-2xl font-semibold text-[#F4F4F5]">
-            Meu perfil
-          </h1>
+      <div className="rounded-2xl border border-red-400/20 bg-[#19191D] p-5 sm:p-8">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 shrink-0 text-red-300" size={20} />
+          <div className="min-w-0">
+            <h2 className="font-medium text-white">
+              Não foi possível carregar seu perfil
+            </h2>
+            <p className="mt-2 break-words text-sm text-red-300">{erro}</p>
+          </div>
         </div>
-
-        <Aviso mensagem={erro || "Não foi possível carregar seu perfil."} />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-10">
+    <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
       <div>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#A9BFFF]">
-          Conta pessoal
+          Conta / Configurações
         </p>
 
         <h1 className="mt-2 text-2xl font-semibold text-[#F4F4F5]">
@@ -364,337 +354,271 @@ export default function Usuarios() {
         </p>
       </div>
 
-      {erro && <Aviso mensagem={erro} />}
+      {(erro || sucesso) && (
+        <div
+          className={`flex items-start gap-3 rounded-xl border p-4 ${
+            erro
+              ? "border-red-400/20 bg-red-400/[0.07]"
+              : "border-emerald-400/20 bg-emerald-400/[0.07]"
+          }`}
+        >
+          {erro ? (
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-300" />
+          ) : (
+            <CheckCircle2
+              size={18}
+              className="mt-0.5 shrink-0 text-emerald-300"
+            />
+          )}
 
-      {sucesso && (
-        <div className="flex items-start gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-emerald-300">
-          <CheckCircle2 size={17} className="mt-0.5 shrink-0" />
-          <p className="text-sm">{sucesso}</p>
+          <p
+            className={`min-w-0 break-words text-sm ${
+              erro ? "text-red-300" : "text-emerald-300"
+            }`}
+          >
+            {erro || sucesso}
+          </p>
         </div>
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#19191D]">
-        <div className="h-28 bg-gradient-to-r from-[#477FFF]/30 via-[#A9BFFF]/10 to-transparent" />
-
-        <div className="px-5 pb-6 sm:px-7">
-          <div className="-mt-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4">
-              <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-[#19191D] bg-[#25252C] text-[#A9BFFF] shadow-xl">
-                {fotoUrl ? (
-                  <img
-                    src={fotoUrl}
-                    alt="Foto de perfil"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <UserRound size={42} strokeWidth={1.4} />
-                )}
-              </div>
-
-              <div className="min-w-0 pb-1">
-                <h2 className="truncate text-lg font-semibold text-[#F4F4F5]">
-                  {usuario.nome}
-                </h2>
-
-                <p className="mt-1 truncate text-sm text-[#A1A1AA]">
-                  {usuario.email}
-                </p>
-              </div>
+      <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#19191D]">
+        <div className="border-b border-white/[0.07] p-4 sm:p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#A9BFFF]/10 text-[#A9BFFF]">
+              <UserRound size={20} />
             </div>
 
-            <div className="flex flex-wrap gap-2 sm:pb-1">
-              <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/[0.09] bg-white/[0.03] px-4 py-2.5 text-xs font-medium text-[#D4D4D8] transition hover:bg-white/[0.07]">
-                <Camera size={15} />
-                Escolher foto
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={selecionarFoto}
-                  className="hidden"
-                />
-              </label>
-
-              {arquivoFoto && (
-                <button
-                  type="button"
-                  onClick={salvarFoto}
-                  disabled={salvandoFoto}
-                  className="flex items-center gap-2 rounded-xl bg-[#A9BFFF] px-4 py-2.5 text-xs font-semibold text-[#101D2D] transition hover:bg-[#BED0FF] disabled:opacity-60"
-                >
-                  {salvandoFoto ? (
-                    <LoaderCircle size={15} className="animate-spin" />
-                  ) : (
-                    <Save size={15} />
-                  )}
-                  Salvar foto
-                </button>
-              )}
-
-              {fotoUrl && !arquivoFoto && (
-                <button
-                  type="button"
-                  onClick={removerFoto}
-                  disabled={salvandoFoto}
-                  title="Remover foto de perfil"
-                  className="flex items-center gap-2 rounded-xl border border-red-400/20 px-3 py-2.5 text-xs text-red-300 transition hover:bg-red-400/10 disabled:opacity-60"
-                >
-                  <Trash2 size={15} />
-                  Remover
-                </button>
-              )}
-            </div>
-          </div>
-
-          <p className="mt-5 text-xs text-[#71717A]">
-            Imagens JPG, PNG ou WEBP. Tamanho máximo: 2 MB.
-          </p>
-        </div>
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="rounded-2xl border border-white/[0.07] bg-[#19191D] p-5 sm:p-6">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#A9BFFF]/10 text-[#A9BFFF]">
-              <UserRound size={19} />
-            </div>
-
-            <div>
-              <h2 className="text-sm font-semibold text-[#F4F4F5]">
-                Informações pessoais
-              </h2>
-
-              <p className="mt-1 text-xs text-[#88888F]">
-                Atualize os dados da sua conta.
+            <div className="min-w-0">
+              <h2 className="font-semibold text-white">Informações pessoais</h2>
+              <p className="mt-1 text-xs text-[#71717A]">
+                Atualize seus dados de identificação.
               </p>
             </div>
           </div>
+        </div>
 
-          <form onSubmit={salvarPerfil} className="space-y-5">
-            <div>
-              <label
-                htmlFor="nome"
-                className="text-xs font-medium text-[#D4D4D8]"
-              >
-                Nome completo
-              </label>
-
-              <input
-                id="nome"
-                name="nome"
-                type="text"
-                autoComplete="name"
-                maxLength={120}
-                required
-                value={form.nome}
-                onChange={atualizarCampo}
-                className={campo}
-                placeholder="Seu nome completo"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="text-xs font-medium text-[#D4D4D8]"
-              >
-                E-mail
-              </label>
-
-              <div className="relative">
-                <Mail
-                  size={16}
-                  className="absolute left-4 top-[26px] text-[#71717A]"
-                />
-
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  maxLength={180}
-                  required
-                  value={form.email}
-                  onChange={atualizarCampo}
-                  className={`${campo} pl-11`}
-                  placeholder="seu@email.com"
-                />
+        <form onSubmit={salvarPerfil} className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
+            <div className="flex flex-col items-center gap-3 md:items-start">
+              <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101014] sm:h-32 sm:w-32">
+                {fotoUrl ? (
+                  <img
+                    src={fotoUrl}
+                    alt="Foto do perfil"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserRound size={42} className="text-[#52525B]" />
+                )}
               </div>
-            </div>
 
-            <div className="rounded-xl border border-white/[0.06] bg-[#101014] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs text-[#88888F]">
-                    Data de criação da conta
+              <div className="flex w-full flex-wrap justify-center gap-2 md:justify-start">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-[#D4D4D8] transition hover:bg-white/[0.05]">
+                  <Camera size={14} />
+                  Alterar foto
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={selecionarFoto}
+                    className="hidden"
+                  />
+                </label>
+
+                {fotoUrl && (
+                  <button
+                    type="button"
+                    onClick={removerFoto}
+                    disabled={salvandoFoto}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-red-400/20 px-3 py-2 text-xs text-red-300 transition hover:bg-red-400/10 disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                    Remover
+                  </button>
+                )}
+              </div>
+
+              {arquivoFoto && (
+                <div className="w-full space-y-2">
+                  <p className="break-all text-center text-xs text-[#A1A1AA] md:text-left">
+                    {arquivoFoto.name}
                   </p>
 
-                  <p className="mt-1 text-sm font-medium text-[#E4E4E7]">
-                    {formatarData(usuario.dataCadastro)}
+                  <button
+                    type="button"
+                    onClick={salvarFoto}
+                    disabled={salvandoFoto}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#A9BFFF] px-3 py-2.5 text-xs font-semibold text-[#101D2D] transition hover:bg-[#BED0FF] disabled:opacity-50"
+                  >
+                    {salvandoFoto ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <ImagePlus size={14} />
+                    )}
+                    Salvar foto
+                  </button>
+                </div>
+              )}
+
+              <p className="text-center text-[11px] text-[#71717A] md:text-left">
+                JPG, PNG ou WEBP · Máximo 2 MB
+              </p>
+            </div>
+
+            <div className="min-w-0 space-y-4">
+              <div>
+                <label className="text-sm text-[#D4D4D8]">Nome completo</label>
+                <input
+                  name="nome"
+                  value={form.nome}
+                  onChange={atualizarCampo}
+                  maxLength={150}
+                  required
+                  className={campo}
+                  placeholder="Seu nome"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-[#D4D4D8]">E-mail</label>
+
+                <div className="relative">
+                  <Mail
+                    size={16}
+                    className="absolute left-3 top-[calc(50%+4px)] -translate-y-1/2 text-[#71717A]"
+                  />
+
+                  <input
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={atualizarCampo}
+                    maxLength={150}
+                    required
+                    className={`${campo} pl-10`}
+                    placeholder="seu@email.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/[0.07] bg-[#101014]/60 p-3">
+                  <p className="text-xs text-[#71717A]">Tipo de conta</p>
+                  <p className="mt-1 break-words text-sm font-medium text-[#D4D4D8]">
+                    {usuario?.tipo || usuario?.role || "Usuário"}
                   </p>
                 </div>
 
-                <CheckCircle2 size={19} className="text-emerald-400" />
+                <div className="rounded-xl border border-white/[0.07] bg-[#101014]/60 p-3">
+                  <p className="text-xs text-[#71717A]">Conta criada em</p>
+                  <p className="mt-1 text-sm font-medium text-[#D4D4D8]">
+                    {formatarData(usuario?.dataCriacao || usuario?.createdAt)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-stretch border-t border-white/[0.07] pt-4 sm:justify-end">
+                <button
+                  type="submit"
+                  disabled={salvandoPerfil}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-5 py-3 text-sm font-semibold text-[#101D2D] transition hover:bg-[#BED0FF] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                >
+                  {salvandoPerfil ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    <Save size={16} />
+                  )}
+                  Salvar alterações
+                </button>
               </div>
             </div>
+          </div>
+        </form>
+      </section>
 
-            <div className="flex justify-end border-t border-white/[0.06] pt-5">
-              <button
-                type="submit"
-                disabled={salvandoPerfil}
-                className="flex items-center gap-2 rounded-xl bg-[#A9BFFF] px-5 py-3 text-sm font-semibold text-[#101D2D] transition hover:bg-[#BED0FF] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {salvandoPerfil ? (
-                  <LoaderCircle size={16} className="animate-spin" />
-                ) : (
-                  <Save size={16} />
-                )}
-                Salvar informações
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section className="rounded-2xl border border-white/[0.07] bg-[#19191D] p-5 sm:p-6">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#A9BFFF]/10 text-[#A9BFFF]">
-              <LockKeyhole size={19} />
+      <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#19191D]">
+        <div className="border-b border-white/[0.07] p-4 sm:p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#A9BFFF]/10 text-[#A9BFFF]">
+              <LockKeyhole size={20} />
             </div>
 
-            <div>
-              <h2 className="text-sm font-semibold text-[#F4F4F5]">
-                Segurança da conta
-              </h2>
-
-              <p className="mt-1 text-xs text-[#88888F]">
+            <div className="min-w-0">
+              <h2 className="font-semibold text-white">Segurança da conta</h2>
+              <p className="mt-1 text-xs text-[#71717A]">
                 Altere sua senha de acesso.
               </p>
             </div>
           </div>
+        </div>
 
-          <form onSubmit={salvarSenha} className="space-y-4">
+        <form onSubmit={salvarSenha} className="space-y-4 p-4 sm:p-6">
+          <div>
+            <label className="text-sm text-[#D4D4D8]">Senha atual</label>
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={senha.atual}
+              onChange={(e) => setSenha({ ...senha, atual: e.target.value })}
+              className={campo}
+              placeholder="Digite sua senha atual"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label
-                htmlFor="senhaAtual"
-                className="text-xs font-medium text-[#D4D4D8]"
-              >
-                Senha atual
-              </label>
-
+              <label className="text-sm text-[#D4D4D8]">Nova senha</label>
               <input
-                id="senhaAtual"
-                name="atual"
-                type="password"
-                autoComplete="current-password"
-                required
-                maxLength={72}
-                value={senha.atual}
-                onChange={atualizarSenha}
-                className={campo}
-                placeholder="Digite sua senha atual"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="novaSenha"
-                className="text-xs font-medium text-[#D4D4D8]"
-              >
-                Nova senha
-              </label>
-
-              <input
-                id="novaSenha"
-                name="nova"
                 type="password"
                 autoComplete="new-password"
-                required
-                minLength={8}
-                maxLength={72}
                 value={senha.nova}
-                onChange={atualizarSenha}
+                onChange={(e) => setSenha({ ...senha, nova: e.target.value })}
                 className={campo}
                 placeholder="Mínimo de 8 caracteres"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="confirmarSenha"
-                className="text-xs font-medium text-[#D4D4D8]"
-              >
+              <label className="text-sm text-[#D4D4D8]">
                 Confirmar nova senha
               </label>
-
               <input
-                id="confirmarSenha"
-                name="confirmar"
                 type="password"
                 autoComplete="new-password"
-                required
-                minLength={8}
-                maxLength={72}
                 value={senha.confirmar}
-                onChange={atualizarSenha}
+                onChange={(e) =>
+                  setSenha({ ...senha, confirmar: e.target.value })
+                }
                 className={campo}
-                placeholder="Digite novamente a nova senha"
+                placeholder="Repita a nova senha"
               />
             </div>
+          </div>
 
-            <div className="rounded-xl border border-[#A9BFFF]/10 bg-[#A9BFFF]/[0.04] p-3">
-              <div className="flex items-start gap-2">
-                <ShieldCheck
-                  size={16}
-                  className="mt-0.5 shrink-0 text-[#A9BFFF]"
-                />
-
-                <p className="text-xs leading-relaxed text-[#A1A1AA]">
-                  Sua senha é armazenada de forma criptografada e nunca é
-                  exibida no perfil.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end border-t border-white/[0.06] pt-5">
-              <button
-                type="submit"
-                disabled={salvandoSenha}
-                className="flex items-center gap-2 rounded-xl border border-[#A9BFFF]/20 bg-[#A9BFFF]/10 px-5 py-3 text-sm font-semibold text-[#C7D5FF] transition hover:bg-[#A9BFFF]/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {salvandoSenha ? (
-                  <LoaderCircle size={16} className="animate-spin" />
-                ) : (
-                  <Check size={16} />
-                )}
-                Atualizar senha
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-
-      <section className="flex items-start gap-3 rounded-2xl border border-white/[0.06] bg-[#19191D]/60 p-4">
-        <ImagePlus size={19} className="mt-0.5 shrink-0 text-[#A9BFFF]" />
-
-        <div>
-          <p className="text-sm font-medium text-[#E4E4E7]">
-            Seu perfil no StockFlow
-          </p>
-
-          <p className="mt-1 text-xs leading-relaxed text-[#88888F]">
-            Suas informações são pessoais e somente você pode atualizar os dados
-            e a foto da sua própria conta.
-          </p>
-        </div>
+          <div className="flex justify-stretch border-t border-white/[0.07] pt-4 sm:justify-end">
+            <button
+              type="submit"
+              disabled={salvandoSenha}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-[#D4D4D8] transition hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {salvandoSenha ? (
+                <LoaderCircle size={16} className="animate-spin" />
+              ) : (
+                <ShieldCheck size={16} />
+              )}
+              Alterar senha
+            </button>
+          </div>
+        </form>
       </section>
-    </div>
-  );
-}
 
-function Aviso({ mensagem }) {
-  return (
-    <div className="flex items-start gap-2 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-red-300">
-      <AlertCircle size={17} className="mt-0.5 shrink-0" />
-      <p className="text-sm">{mensagem}</p>
+      <div className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-[#19191D]/60 p-4">
+        <Check size={17} className="mt-0.5 shrink-0 text-[#A9BFFF]" />
+        <p className="text-xs leading-relaxed text-[#A1A1AA]">
+          Mantenha seus dados atualizados e utilize uma senha segura. Suas
+          informações são utilizadas para identificar suas atividades no
+          StockFlow.
+        </p>
+      </div>
     </div>
   );
 }

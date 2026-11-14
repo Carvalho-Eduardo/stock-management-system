@@ -65,11 +65,11 @@ function mensagemErro(error) {
 function Indicador({ titulo, valor, detalhe, icone: Icone, cor }) {
   void Icone;
   return (
-    <article className="rounded-[18px] bg-[#19191D] p-5">
+    <article className="rounded-[18px] bg-[#19191D] p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs text-[#9999A1]">{titulo}</p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+          <p className="mt-2 break-words text-xl font-semibold tracking-tight text-white sm:mt-3 sm:text-2xl">
             {valor}
           </p>
           <p className="mt-1 text-[10px] text-[#77777F]">{detalhe}</p>
@@ -172,7 +172,7 @@ function ModalProduto({
         role="dialog"
         aria-modal="true"
         aria-labelledby="titulo-modal-produto"
-        className="my-auto w-full max-w-2xl overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#19191D] shadow-2xl"
+        className="my-auto w-full max-w-2xl overflow-hidden rounded-[18px] border border-white/[0.08] bg-[#19191D] shadow-2xl sm:rounded-[22px]"
       >
         <header className="flex items-center justify-between border-b border-white/[0.06] px-5 py-5 sm:px-7">
           <div>
@@ -206,7 +206,7 @@ function ModalProduto({
         </header>
 
         <form onSubmit={enviarFormulario}>
-          <div className="grid grid-cols-1 gap-4 px-5 py-6 sm:grid-cols-2 sm:px-7">
+          <div className="grid max-h-[calc(100dvh-190px)] grid-cols-1 gap-4 overflow-y-auto px-4 py-5 sm:grid-cols-2 sm:px-7 sm:py-6">
             <div className="sm:col-span-2">
               <label className={labelClasse} htmlFor="produto-nome">
                 Nome do produto *
@@ -844,7 +844,7 @@ function Produtos() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto px-4 pb-2">
+            <div className="hidden overflow-x-auto px-4 pb-2 lg:block">
               <table className="w-full min-w-[850px] text-left">
                 <thead>
                   <tr className="bg-[#29292D] text-[10px] text-[#C1C1C8]">
@@ -941,6 +941,93 @@ function Produtos() {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            <div className="space-y-3 px-4 pb-4 lg:hidden">
+              {produtosFiltrados.map((produto) => {
+                const status = obterStatus(produto);
+                const estiloStatus = {
+                  Normal: "bg-[#A9BFFF]/10 text-[#A9BFFF]",
+                  Baixo: "bg-[#D7CDA6]/10 text-[#D7CDA6]",
+                  Esgotado: "bg-red-400/10 text-red-300",
+                };
+
+                return (
+                  <article
+                    key={produto.id}
+                    className="rounded-2xl border border-white/[0.07] bg-[#101D2D]/70 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words text-sm font-semibold text-white">
+                          {produto.nome}
+                        </h3>
+                        <p className="mt-1 break-all text-[10px] text-[#77777F]">
+                          SKU: {produto.sku}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md px-2 py-1.5 text-[10px] font-medium ${estiloStatus[status]}`}
+                      >
+                        {status}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 border-t border-white/[0.06] pt-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-[#77777F]">Categoria</p>
+                        <p className="mt-1 truncate text-xs text-[#D5D5DC]">
+                          {produto.categoria?.nome || "Sem categoria"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#77777F]">Preço</p>
+                        <p className="mt-1 text-xs font-medium text-white">
+                          {formatarMoeda(produto.preco)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#77777F]">
+                          Estoque atual
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-white">
+                          {produto.quantidadeEstoque} un.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#77777F]">
+                          Estoque mínimo
+                        </p>
+                        <p className="mt-1 text-xs text-[#D5D5DC]">
+                          {produto.estoqueMinimo} un.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex gap-2 border-t border-white/[0.06] pt-3">
+                      <button
+                        type="button"
+                        onClick={() => abrirEdicao(produto)}
+                        className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[#A9BFFF]/20 bg-[#A9BFFF]/[0.08] text-xs font-medium text-[#A9BFFF] transition hover:bg-[#A9BFFF]/15"
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setErroExclusao("");
+                          setProdutoExcluindo(produto);
+                        }}
+                        className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-red-400/20 bg-red-400/[0.06] text-xs font-medium text-red-300 transition hover:bg-red-400/10"
+                      >
+                        <Trash2 size={14} />
+                        Excluir
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
 
             <div className="flex flex-col gap-2 border-t border-white/[0.06] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">

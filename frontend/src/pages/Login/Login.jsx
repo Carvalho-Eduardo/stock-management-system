@@ -1,170 +1,232 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Package,
-  Mail,
   LockKeyhole,
-  ArrowRight,
+  Mail,
+  Eye,
+  EyeOff,
   LoaderCircle,
   AlertCircle,
-  UserRound,
+  CheckCircle2,
   UserPlus,
-  LogIn,
 } from "lucide-react";
-
 import api from "../../services/api";
-
-const campo =
-  "w-full rounded-xl border border-[#36363D] bg-[#101014] py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-[#62626B] focus:border-[#A9BFFF]";
 
 function Login() {
   const navigate = useNavigate();
 
-  const [modo, setModo] = useState("login");
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
+  const [modoCadastro, setModoCadastro] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
-  function trocarModo(novoModo) {
-    setModo(novoModo);
+  const [formulario, setFormulario] = useState({
+    nome: "",
+    email: "",
+    senha: "",
+    confirmarSenha: "",
+  });
+
+  const atualizarCampo = (campo, valor) => {
+    setFormulario((anterior) => ({
+      ...anterior,
+      [campo]: valor,
+    }));
     setErro("");
     setSucesso("");
-  }
+  };
 
-  async function handleLogin(event) {
-    event.preventDefault();
-
+  const alternarModo = () => {
+    setModoCadastro((anterior) => !anterior);
     setErro("");
     setSucesso("");
-    setCarregando(true);
+    setFormulario({
+      nome: "",
+      email: "",
+      senha: "",
+      confirmarSenha: "",
+    });
+  };
 
-    try {
-      const resposta = await api.post("/usuarios/login", {
-        email: email.trim(),
-        senha,
-      });
+  const tratarErro = (error) => {
+    const dados = error?.response?.data;
 
-      const { token, usuario } = resposta.data;
+    if (typeof dados === "string" && dados.trim()) return dados;
+    if (dados?.message) return dados.message;
+    if (dados?.mensagem) return dados.mensagem;
+    if (dados?.erro) return dados.erro;
 
-      if (!token) {
-        throw new Error("O servidor não retornou um token de acesso.");
-      }
-
-      localStorage.setItem("stockflow_token", token);
-
-      if (usuario) {
-        localStorage.setItem("stockflow_usuario", JSON.stringify(usuario));
-      }
-
-      navigate("/", { replace: true });
-    } catch (error) {
-      setErro(
-        error.response?.data?.mensagens?.join(" ") ||
-          error.response?.data?.message ||
-          "Não foi possível realizar o login. Verifique seus dados e tente novamente.",
-      );
-    } finally {
-      setCarregando(false);
+    if (error?.response?.status === 401) {
+      return "E-mail ou senha incorretos.";
     }
-  }
 
-  async function handleCadastro(event) {
-    event.preventDefault();
+    if (error?.response?.status === 409) {
+      return "Já existe uma conta cadastrada com este e-mail.";
+    }
 
+    if (error?.response?.status === 400) {
+      return "Verifique os dados informados e tente novamente.";
+    }
+
+    return "Não foi possível concluir a operação. Tente novamente.";
+  };
+
+  const validarFormulario = () => {
+    if (!formulario.email.trim()) {
+      return "Informe seu e-mail.";
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formulario.email.trim())) {
+      return "Informe um endereço de e-mail válido.";
+    }
+
+    if (!formulario.senha) {
+      return "Informe sua senha.";
+    }
+
+    if (modoCadastro) {
+      if (!formulario.nome.trim()) {
+        return "Informe seu nome.";
+      }
+
+      if (formulario.nome.trim().length < 3) {
+        return "O nome deve possuir pelo menos 3 caracteres.";
+      }
+
+      if (formulario.senha.length < 6) {
+        return "A senha deve possuir pelo menos 6 caracteres.";
+      }
+
+      if (formulario.senha !== formulario.confirmarSenha) {
+        return "As senhas não coincidem.";
+      }
+    }
+
+    return "";
+  };
+
+  const entrar = async (evento) => {
+    evento.preventDefault();
     setErro("");
     setSucesso("");
 
-    if (senha.length < 8) {
-      setErro("A senha deve ter pelo menos 8 caracteres.");
+    const mensagemValidacao = validarFormulario();
+
+    if (mensagemValidacao) {
+      setErro(mensagemValidacao);
       return;
     }
 
     setCarregando(true);
 
     try {
-      await api.post("/usuarios/cadastro", {
-        nome: nome.trim(),
-        email: email.trim(),
-        senha,
+      if (modoCadastro) {
+        await api.post("/usuarios/cadastro", {
+          nome: formulario.nome.trim(),
+          email: formulario.email.trim(),
+          senha: formulario.senha,
+        });
+
+        setSucesso("Cadastro realizado! Faça login para continuar.");
+        setModoCadastro(false);
+
+        setFormulario((anterior) => ({
+          ...anterior,
+          nome: "",
+          senha: "",
+          confirmarSenha: "",
+        }));
+
+        return;
+      }
+
+      const resposta = await api.post("/usuarios/login", {
+        email: formulario.email.trim(),
+        senha: formulario.senha,
       });
 
-      setSucesso("Cadastro realizado! Agora entre com seu e-mail e senha.");
-      setModo("login");
-      setNome("");
-      setSenha("");
+      const token =
+        resposta.data?.token ||
+        resposta.data?.accessToken ||
+        resposta.data?.jwt;
+
+      if (!token) {
+        throw new Error("A resposta do servidor não contém um token válido.");
+      }
+
+      localStorage.setItem("stockflow_token", token);
+
+      const usuario =
+        resposta.data?.usuario ||
+        resposta.data?.user ||
+        resposta.data?.dados ||
+        {};
+
+      localStorage.setItem("stockflow_usuario", JSON.stringify(usuario));
+
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      setErro(
-        error.response?.data?.mensagens?.join(" ") ||
-          error.response?.data?.message ||
-          "Não foi possível realizar o cadastro.",
-      );
+      setErro(tratarErro(error));
     } finally {
       setCarregando(false);
     }
-  }
+  };
+
+  const campo =
+    "w-full rounded-xl border border-white/[0.08] bg-[#101014] px-4 py-3 pl-11 text-sm text-white outline-none transition placeholder:text-[#52525B] focus:border-[#A9BFFF]/50 focus:ring-2 focus:ring-[#A9BFFF]/10";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#09090D] px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#A9BFFF]/20 bg-[#A9BFFF]/10">
-            <Package size={32} className="text-[#A9BFFF]" />
+            <LockKeyhole size={30} className="text-[#A9BFFF]" />
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Stock<span className="text-[#A9BFFF]">Flow</span>
+            StockFlow
           </h1>
 
           <p className="mt-2 text-sm text-[#A1A1AA]">
-            Sistema de gerenciamento de estoque
+            Gestão inteligente de estoque
           </p>
         </div>
 
         <div className="rounded-2xl border border-[#29292D] bg-[#19191D] p-6 shadow-2xl sm:p-8">
           <div className="mb-7">
             <h2 className="text-xl font-semibold text-white">
-              {modo === "login" ? "Bem-vindo de volta" : "Criar conta"}
+              {modoCadastro ? "Criar sua conta" : "Bem-vindo de volta"}
             </h2>
 
             <p className="mt-2 text-sm text-[#A1A1AA]">
-              {modo === "login"
-                ? "Entre com suas credenciais para acessar o sistema."
-                : "Crie sua conta gratuita para acessar o StockFlow."}
+              {modoCadastro
+                ? "Preencha os dados para começar a utilizar o StockFlow."
+                : "Entre com suas credenciais para acessar o sistema."}
             </p>
           </div>
 
-          <form
-            onSubmit={modo === "login" ? handleLogin : handleCadastro}
-            className="space-y-5"
-          >
-            {modo === "cadastro" && (
+          <form onSubmit={entrar} className="space-y-5">
+            {modoCadastro && (
               <div>
-                <label
-                  htmlFor="nome"
-                  className="mb-2 block text-sm font-medium text-[#D4D4D8]"
-                >
+                <label className="mb-2 block text-sm text-[#D4D4D8]">
                   Nome completo
                 </label>
 
                 <div className="relative">
-                  <UserRound
-                    size={18}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#71717A]"
+                  <UserPlus
+                    size={17}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#71717A]"
                   />
 
                   <input
-                    id="nome"
                     type="text"
-                    autoComplete="name"
-                    required
-                    maxLength={120}
-                    value={nome}
-                    onChange={(event) => setNome(event.target.value)}
+                    value={formulario.nome}
+                    onChange={(e) => atualizarCampo("nome", e.target.value)}
                     placeholder="Seu nome"
+                    maxLength={150}
+                    autoComplete="name"
                     className={campo}
                   />
                 </div>
@@ -172,70 +234,107 @@ function Login() {
             )}
 
             <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-[#D4D4D8]"
-              >
+              <label className="mb-2 block text-sm text-[#D4D4D8]">
                 E-mail
               </label>
 
               <div className="relative">
                 <Mail
-                  size={18}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#71717A]"
+                  size={17}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#71717A]"
                 />
 
                 <input
-                  id="email"
                   type="email"
-                  autoComplete="email"
-                  required
-                  maxLength={180}
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  value={formulario.email}
+                  onChange={(e) => atualizarCampo("email", e.target.value)}
                   placeholder="seu@email.com"
+                  autoComplete="email"
                   className={campo}
                 />
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="senha"
-                className="mb-2 block text-sm font-medium text-[#D4D4D8]"
-              >
-                Senha
-              </label>
+              <label className="mb-2 block text-sm text-[#D4D4D8]">Senha</label>
 
               <div className="relative">
                 <LockKeyhole
-                  size={18}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#71717A]"
+                  size={17}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#71717A]"
                 />
 
                 <input
-                  id="senha"
-                  type="password"
-                  autoComplete={modo === "login" ? "current-password" : "new-password"}
-                  required
-                  minLength={modo === "cadastro" ? 8 : undefined}
-                  maxLength={72}
-                  value={senha}
-                  onChange={(event) => setSenha(event.target.value)}
-                  placeholder={
-                    modo === "cadastro"
-                      ? "Mínimo de 8 caracteres"
-                      : "Digite sua senha"
+                  type={mostrarSenha ? "text" : "password"}
+                  value={formulario.senha}
+                  onChange={(e) => atualizarCampo("senha", e.target.value)}
+                  placeholder="Sua senha"
+                  autoComplete={
+                    modoCadastro ? "new-password" : "current-password"
                   }
-                  className={campo}
+                  className={`${campo} pr-12`}
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((anterior) => !anterior)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#71717A] transition hover:text-white"
+                  aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {mostrarSenha ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
               </div>
             </div>
+
+            {modoCadastro && (
+              <div>
+                <label className="mb-2 block text-sm text-[#D4D4D8]">
+                  Confirmar senha
+                </label>
+
+                <div className="relative">
+                  <LockKeyhole
+                    size={17}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#71717A]"
+                  />
+
+                  <input
+                    type={mostrarConfirmacao ? "text" : "password"}
+                    value={formulario.confirmarSenha}
+                    onChange={(e) =>
+                      atualizarCampo("confirmarSenha", e.target.value)
+                    }
+                    placeholder="Digite sua senha novamente"
+                    autoComplete="new-password"
+                    className={`${campo} pr-12`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMostrarConfirmacao((anterior) => !anterior)
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#71717A] transition hover:text-white"
+                    aria-label={
+                      mostrarConfirmacao
+                        ? "Ocultar confirmação"
+                        : "Mostrar confirmação"
+                    }
+                  >
+                    {mostrarConfirmacao ? (
+                      <EyeOff size={17} />
+                    ) : (
+                      <Eye size={17} />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {erro && (
               <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3">
                 <AlertCircle
-                  size={18}
+                  size={17}
                   className="mt-0.5 shrink-0 text-red-400"
                 />
                 <p className="text-sm text-red-300">{erro}</p>
@@ -244,8 +343,8 @@ function Login() {
 
             {sucesso && (
               <div className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-                <Package
-                  size={18}
+                <CheckCircle2
+                  size={17}
                   className="mt-0.5 shrink-0 text-emerald-400"
                 />
                 <p className="text-sm text-emerald-300">{sucesso}</p>
@@ -255,55 +354,40 @@ function Login() {
             <button
               type="submit"
               disabled={carregando}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-4 py-3 text-sm font-semibold text-[#101827] transition hover:bg-[#C0D0FF] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A9BFFF] px-5 py-3 text-sm font-semibold text-[#101D2D] transition hover:bg-[#BDD0FF] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {carregando ? (
                 <>
-                  <LoaderCircle size={18} className="animate-spin" />
-                  {modo === "login" ? "Entrando..." : "Cadastrando..."}
+                  <LoaderCircle size={17} className="animate-spin" />
+                  Aguarde...
                 </>
+              ) : modoCadastro ? (
+                "Criar conta"
               ) : (
-                <>
-                  {modo === "login" ? "Entrar no sistema" : "Criar minha conta"}
-                  {modo === "login" ? (
-                    <ArrowRight size={18} />
-                  ) : (
-                    <UserPlus size={18} />
-                  )}
-                </>
+                "Entrar no sistema"
               )}
             </button>
           </form>
 
           <div className="mt-6 border-t border-white/[0.06] pt-5 text-center">
             <p className="text-sm text-[#A1A1AA]">
-              {modo === "login"
-                ? "Ainda não tem uma conta?"
-                : "Já possui uma conta?"}
+              {modoCadastro
+                ? "Já possui uma conta?"
+                : "Ainda não possui uma conta?"}
             </p>
 
             <button
               type="button"
-              onClick={() => trocarModo(modo === "login" ? "cadastro" : "login")}
-              className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#A9BFFF] transition hover:text-white"
+              onClick={alternarModo}
+              className="mt-2 text-sm font-medium text-[#A9BFFF] transition hover:text-white"
             >
-              {modo === "login" ? (
-                <>
-                  <UserPlus size={16} />
-                  Criar conta
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  Voltar para o login
-                </>
-              )}
+              {modoCadastro ? "Voltar para o login" : "Criar uma conta"}
             </button>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-[#71717A]">
-          StockFlow · Gerenciamento inteligente de estoque
+        <p className="mt-6 text-center text-xs text-[#52525B]">
+          StockFlow · Sistema de Gestão de Estoque
         </p>
       </div>
     </div>
