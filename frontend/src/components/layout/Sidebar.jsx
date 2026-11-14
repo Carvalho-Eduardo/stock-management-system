@@ -10,6 +10,7 @@ import {
   ArrowLeftRight,
   ClipboardList,
   Boxes,
+  UserRound,
 } from "lucide-react";
 
 import api from "../../services/api";
@@ -52,7 +53,15 @@ function Sidebar() {
           responseType: "blob",
         });
 
-        if (!ativo || !resposta.data || resposta.data.size === 0) {
+        if (!ativo) return;
+
+        if (!resposta.data || resposta.data.size === 0) {
+          if (urlAtual) {
+            URL.revokeObjectURL(urlAtual);
+            urlAtual = "";
+          }
+
+          setFotoUrl("");
           return;
         }
 
@@ -66,6 +75,11 @@ function Sidebar() {
         setFotoUrl(novaUrl);
       } catch {
         if (ativo) {
+          if (urlAtual) {
+            URL.revokeObjectURL(urlAtual);
+            urlAtual = "";
+          }
+
           setFotoUrl("");
         }
       }
@@ -139,7 +153,7 @@ function Sidebar() {
           title="Meu perfil"
           aria-label="Abrir meu perfil"
           className={({ isActive }) =>
-            `flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-xs font-semibold transition ${
+            `flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border transition ${
               isActive
                 ? "border-[#A9BFFF] bg-[#A9BFFF]/20 text-[#A9BFFF]"
                 : "border-[#A9BFFF]/30 bg-[#A9BFFF]/10 text-[#A9BFFF] hover:border-[#A9BFFF] hover:bg-[#A9BFFF]/20"
@@ -153,7 +167,7 @@ function Sidebar() {
               className="h-full w-full object-cover"
             />
           ) : (
-            "SF"
+            <UserRound size={20} strokeWidth={1.8} />
           )}
         </NavLink>
       </div>
